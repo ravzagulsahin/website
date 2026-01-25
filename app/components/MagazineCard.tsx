@@ -4,7 +4,7 @@ type Magazine = {
   id: string;
   title: string;
   issue?: string | null;
-  cover_url?: string | null; // sende cover alanının adı farklıysa değiştir
+  coverUrl?: string | null;
 };
 
 export default function MagazineCard({ m }: { m: Magazine }) {
@@ -31,10 +31,10 @@ export default function MagazineCard({ m }: { m: Magazine }) {
             placeItems: "center",
           }}
         >
-          {m.cover_url ? (
+          {m.coverUrl ? (
             // cover varsa burada img / next/image koyarsın
             <img
-              src={m.cover_url}
+              src={m.coverUrl}
               alt={m.title}
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />

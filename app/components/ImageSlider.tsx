@@ -13,13 +13,13 @@ interface Slide {
 }
 
 const originalSlides: Slide[] = [
-  { id: 1, title: 'Psikoloji Topluluğu Etkinlikleri', description: 'Topluluk etkinliklerimizden kareler', color: 'linear-gradient(135deg, #5a78ff, #ffb478)' },
-  { id: 2, title: 'Seminer ve Konferanslar', description: 'Uzman konuşmacılarla buluşmalar', color: 'linear-gradient(135deg, #ffb478, #5a78ff)' },
-  { id: 3, title: 'Araştırma Projeleri', description: 'Topluluk üyelerimizin çalışmaları', color: 'linear-gradient(135deg, #78ffb4, #ff78b4)' },
-  { id: 4, title: 'Topluluk Buluşmaları', description: 'Birlikte öğrenme ve paylaşım', color: 'linear-gradient(135deg, #b478ff, #78b4ff)' },
-  { id: 5, title: 'Workshop ve Atölyeler', description: 'Pratik beceriler geliştirme fırsatları', color: 'linear-gradient(135deg, #ff78c8, #78c8ff)' },
-  { id: 6, title: 'Sosyal Etkinlikler', description: 'Eğlenceli ve unutulmaz anılar', color: 'linear-gradient(135deg, #c8ff78, #ffc878)' },
-  { id: 7, title: 'Akademik Başarılar', description: 'Topluluk üyelerimizin başarı hikayeleri', color: 'linear-gradient(135deg, #78b4ff, #ff78b4)' },
+  { id: 1, title: 'Psikoloji Topluluğu Etkinlikleri', description: 'Topluluk etkinliklerimizden kareler', color: 'linear-gradient(135deg, #5a78ff, #ffb478)', image_path: 'photo-01.webp' },
+  { id: 2, title: 'Seminer ve Konferanslar', description: 'Uzman konuşmacılarla buluşmalar', color: 'linear-gradient(135deg, #ffb478, #5a78ff)', image_path: 'photo-02.webp' },
+  { id: 3, title: 'Araştırma Projeleri', description: 'Topluluk üyelerimizin çalışmaları', color: 'linear-gradient(135deg, #78ffb4, #ff78b4)', image_path: 'photo-03.webp' },
+  { id: 4, title: 'Topluluk Buluşmaları', description: 'Birlikte öğrenme ve paylaşım', color: 'linear-gradient(135deg, #b478ff, #78b4ff)', image_path: 'photo-04.webp' },
+  { id: 5, title: 'Workshop ve Atölyeler', description: 'Pratik beceriler geliştirme fırsatları', color: 'linear-gradient(135deg, #ff78c8, #78c8ff)', image_path: 'photo-05.webp' },
+  { id: 6, title: 'Sosyal Etkinlikler', description: 'Eğlenceli ve unutulmaz anılar', color: 'linear-gradient(135deg, #c8ff78, #ffc878)', image_path: 'photo-06.webp' },
+  { id: 7, title: 'Akademik Başarılar', description: 'Topluluk üyelerimizin başarı hikayeleri', color: 'linear-gradient(135deg, #78b4ff, #ff78b4)', image_path: 'photo-07.webp' },
 ];
 
 export default function ImageSlider() {
@@ -51,19 +51,24 @@ export default function ImageSlider() {
     }}>
       
       {/* ARKA PLAN KATMANI (Crossfade) */}
-      {originalSlides.map((slide, index) => (
-        <div
-          key={slide.id}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: slide.color,
-            opacity: index === currentIndex ? 1 : 0,
-            transition: 'opacity 1.2s ease-in-out', // Yumuşak geçiş hızı
-            zIndex: 1,
-          }}
-        />
-      ))}
+      {originalSlides.map((slide, index) => {
+        const bgImage = slide.image_path ? r2.photos(slide.image_path) : null;
+        return (
+          <div
+            key={slide.id}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: bgImage ? `url(${bgImage})` : slide.color,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              opacity: index === currentIndex ? 1 : 0,
+              transition: 'opacity 1.2s ease-in-out',
+              zIndex: 1,
+            }}
+          />
+        );
+      })}
 
       {/* SABİT İÇERİK KATMANI (Hiç hareket etmez) */}
       <div style={{

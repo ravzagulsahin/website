@@ -11,12 +11,7 @@ export default async function BlogPostPage({
 
   if (!post) return notFound();
 
-  const cover =
-    post.cover_url
-      ? post.cover_url
-      : post.cover_path
-        ? r2.blog(post.cover_path)
-        : null;
+  const cover = post.cover_path ? r2.blog(post.cover_path) : null;
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
