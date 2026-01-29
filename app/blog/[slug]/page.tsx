@@ -2,12 +2,18 @@ import { notFound } from "next/navigation";
 import { getBlogPostBySlug } from "@/lib/data/blog";
 import { r2 } from "@/lib/r2";
 
+async function getParam<T>(params: Promise<T>) {
+  return await params;
+}
+
 export default async function BlogPostPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const post = await getBlogPostBySlug(params.slug);
+  const { slug } = await getParam(params);
+  console.log("slug:", slug);
+  const post = await getBlogPostBySlug(slug);
 
   if (!post) return notFound();
 
@@ -30,7 +36,6 @@ export default async function BlogPostPage({
       )}
 
       <article className="prose prose-neutral mt-10 max-w-none">
-        {/* Şimdilik content jsonb ise ham basmayalım. Geçici: */}
         <pre className="whitespace-pre-wrap rounded-2xl bg-black/5 p-4 text-sm">
           {JSON.stringify(post.content, null, 2)}
         </pre>

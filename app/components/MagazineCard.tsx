@@ -8,6 +8,7 @@ type Magazine = {
 };
 
 export default function MagazineCard({ m }: { m: Magazine }) {
+  console.log("MAG RAW:", m);
   return (
     <Link href={`/magazines/${m.id}`} style={{ textDecoration: "none" }}>
       <article

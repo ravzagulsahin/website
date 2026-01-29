@@ -1,17 +1,22 @@
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+async function getParam<T>(params: Promise<T> | T) {
+  return params instanceof Promise ? await params : params;
+}
+
 export default async function MagazineReadPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }> | { id: string };
 }) {
+  const { id } = await getParam(params);
   const supabase = createSupabaseServerClient();
 
   const { data, error } = await supabase
     .from("magazines")
     .select("id,title,issue,format,cover_url,pdf_path,published")
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("published", true)
     .maybeSingle();
 
