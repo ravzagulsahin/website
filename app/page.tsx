@@ -8,208 +8,243 @@ export default async function Home() {
   const featuredMagazines = allMagazines.slice(0, 3);
 
   return (
-    <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem 1rem" }}>
-      <h1 style={{ fontSize: "2rem", marginBottom: "1rem", fontWeight: "600", color: "var(--text)" }}>
-        Akdeniz Üniversitesi Psikoloji Topluluğu
-      </h1>
-      {/* Top photo/slider */}
-      <section style={{ marginBottom: "3rem" }}>
-        <ImageSlider />
+    <div style={{ maxWidth: "1400px", margin: "0 auto", padding: "3rem 2rem" }}>
+      
+      {/* ASYMMETRICAL HERO SECTION - 12 column grid */}
+      <section style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(12, 1fr)",
+        gap: "3rem",
+        alignItems: "start",
+        marginBottom: "5rem"
+      }}>
+        {/* Left: Title (4 columns, vertical offset) */}
+        <div style={{
+          gridColumn: "1 / 5",
+          paddingTop: "2rem",
+        }}>
+          <h1 style={{
+            fontFamily: "var(--font-serif)",
+            fontSize: "clamp(2.2rem, 5vw, 3.8rem)",
+            fontWeight: 800,
+            lineHeight: 1.05,
+            letterSpacing: "-1.5px",
+            color: "var(--text)",
+            marginBottom: "1rem"
+          }}>
+            The Journal
+          </h1>
+          <p style={{
+            fontSize: "1.1rem",
+            color: "var(--muted)",
+            maxWidth: "280px",
+            lineHeight: 1.6,
+            fontWeight: 400
+          }}>
+            Akdeniz Üniversitesi Psikoloji Topluluğu
+          </p>
+        </div>
+
+        {/* Right: ImageSlider (8 columns, focal point) */}
+        <div style={{
+          gridColumn: "5 / 13",
+        }}>
+          <ImageSlider />
+        </div>
       </section>
 
       {/* Magazine preview cards */}
-<section style={{ marginBottom: "3rem" }}>
-  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "1rem", marginBottom: "1.25rem" }}>
-    <div>
-      <h2 style={{ fontSize: "1.5rem", fontWeight: "600", color: "var(--text)", margin: 0 }}>
-        Featured Magazines
-      </h2>
-      <p style={{ margin: "0.35rem 0 0", color: "var(--muted)", fontSize: "0.95rem" }}>
-        Son yayınlanan sayılardan seçmeler
-      </p>
-    </div>
+      <section style={{ marginBottom: "5rem" }}>
+        <div style={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: "2rem",
+          marginBottom: "2.5rem",
+          borderBottom: "1px solid var(--stroke)",
+          paddingBottom: "1.5rem"
+        }}>
+          <div>
+            <h2 style={{
+              fontSize: "2rem",
+              fontWeight: 700,
+              color: "var(--text)",
+              margin: 0,
+              fontFamily: "var(--font-serif)"
+            }}>
+              Featured Editions
+            </h2>
+          </div>
 
-    <Link
-      href="/magazines"
-      style={{
-        textDecoration: "none",
-        color: "var(--text)",
-        fontSize: "0.95rem",
-        fontWeight: "500",
-        opacity: 0.85,
-      }}
-    >
-      Tümünü gör →
-    </Link>
-  </div>
-
-  {featuredMagazines.length > 0 ? (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(240px, 280px))",
-        gap: "1.25rem",
-        alignItems: "start",
-      }}
-    >
-      {featuredMagazines.map((magazine) => (
-        <Link
-          key={magazine.id}
-          href={`/magazines/${magazine.id}`}
-          style={{ textDecoration: "none", color: "inherit" }}
-        >
-          <article
-            className="card featured-card"
+          <Link
+            href="/magazines"
             style={{
-              padding: 0,
-              overflow: "hidden",
-              borderRadius: "18px",
-              border: "1px solid rgba(0,0,0,0.06)",
+              textDecoration: "none",
+              color: "var(--accent)",
+              fontSize: "0.95rem",
+              fontWeight: 600,
+              opacity: 1,
+              transition: "opacity 200ms ease"
             }}
           >
-            {/* Cover area (fixed height, not full-page) */}
-            <div
-              style={{
-                width: "100%",
-                height: 180,
-                position: "relative",
-                overflow: "hidden",
-                background: "rgba(255,255,255,0.55)",
-              }}
-            >
-              {/* subtle overlay gradient (always) */}
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  background:
-                    "linear-gradient(135deg, rgba(120,120,255,0.18), rgba(255,170,220,0.18), rgba(130,240,200,0.18))",
-                }}
-              />
+            View All →
+          </Link>
+        </div>
 
-              {magazine.coverUrl ? (
-                <img
-                  src={magazine.coverUrl}
-                  alt={magazine.title}
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
-                />
-              ) : (
-                // Designed placeholder (no ugly "No Cover" in the middle of emptiness)
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    display: "grid",
-                    placeItems: "center",
-                    padding: "1rem",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      padding: "0.45rem 0.75rem",
-                      borderRadius: "999px",
-                      background: "rgba(255,255,255,0.55)",
-                      border: "1px solid rgba(0,0,0,0.08)",
-                      color: "rgba(0,0,0,0.60)",
-                      fontSize: "0.9rem",
-                      backdropFilter: "blur(8px)",
-                    }}
-                  >
-                    <span style={{ fontSize: "1rem" }}>📘</span>
-                    <span>Kapak yakında</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Meta area */}
-            <div style={{ padding: "1rem 1.1rem 1.1rem" }}>
-              <h3
-                style={{
-                  fontSize: "1.05rem",
-                  margin: 0,
-                  fontWeight: "650",
-                  color: "var(--text)",
-                  lineHeight: 1.25,
-                }}
+        {featuredMagazines.length > 0 ? (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: "2rem",
+              alignItems: "start",
+            }}
+          >
+            {featuredMagazines.map((magazine) => (
+              <Link
+                key={magazine.id}
+                href={`/magazines/${magazine.id}`}
+                style={{ textDecoration: "none", color: "inherit" }}
               >
-                {magazine.title}
-              </h3>
+                <article style={{
+                  background: "var(--card)",
+                  borderRadius: "0.5rem",
+                  border: "1px solid var(--stroke)",
+                  overflow: "hidden",
+                  transition: "transform 300ms ease, box-shadow 300ms ease",
+                  cursor: "pointer"
+                }} 
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget;
+                  el.style.transform = "scale(1.02)";
+                  el.style.boxShadow = "0 12px 32px rgba(0, 0, 0, 0.12)";
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget;
+                  el.style.transform = "scale(1)";
+                  el.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.06)";
+                }}>
+                  {/* Cover 3:4 aspect ratio */}
+                  <div style={{
+                    aspectRatio: "3 / 4",
+                    overflow: "hidden",
+                    background: "rgba(0,0,0,0.04)",
+                    position: "relative"
+                  }}>
+                    {magazine.coverUrl ? (
+                      <img
+                        src={magazine.coverUrl}
+                        alt={magazine.title}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          transition: "filter 400ms ease, transform 400ms ease"
+                        }}
+                        onMouseEnter={(e) => {
+                          const el = e.currentTarget as HTMLImageElement;
+                          el.style.transform = "scale(1.05)";
+                        }}
+                        onMouseLeave={(e) => {
+                          const el = e.currentTarget as HTMLImageElement;
+                          el.style.transform = "scale(1)";
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: "linear-gradient(135deg, rgba(139, 115, 85, 0.1), rgba(212, 197, 185, 0.1))",
+                        color: "var(--muted)"
+                      }}>
+                        No Cover
+                      </div>
+                    )}
+                  </div>
 
-              <div style={{ marginTop: "0.45rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem" }}>
-                <p style={{ color: "var(--muted)", fontSize: "0.9rem", margin: 0 }}>
-                  {magazine.issue}
-                </p>
-
-                <span
-                  style={{
-                    fontSize: "0.9rem",
-                    color: "var(--text)",
-                    opacity: 0.8,
-                    fontWeight: 500,
-                  }}
-                >
-                  Oku →
-                </span>
-              </div>
-            </div>
-          </article>
-        </Link>
-      ))}
-    </div>
-  ) : (
-    <div className="card" style={{ padding: "1.25rem" }}>
-      <p style={{ color: "var(--muted)", fontSize: "0.95rem", margin: 0 }}>
-        Henüz dergi bulunmamaktadır.
-      </p>
-    </div>
-  )}
-</section>
+                  {/* Meta */}
+                  <div style={{ padding: "1.5rem 1.25rem" }}>
+                    <h3 style={{
+                      fontFamily: "var(--font-serif)",
+                      fontSize: "1rem",
+                      fontWeight: 700,
+                      marginBottom: "0.5rem",
+                      color: "var(--text)",
+                      lineHeight: 1.3,
+                      fontStyle: "italic"
+                    }}>
+                      {magazine.title}
+                    </h3>
+                    <p style={{
+                      fontSize: "0.85rem",
+                      color: "var(--muted)",
+                      margin: 0
+                    }}>
+                      {magazine.issue}
+                    </p>
+                  </div>
+                </article>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div style={{
+            padding: "2rem",
+            background: "var(--card)",
+            borderRadius: "0.5rem",
+            border: "1px solid var(--stroke)"
+          }}>
+            <p style={{ color: "var(--muted)", margin: 0 }}>Henüz dergi bulunmamaktadır.</p>
+          </div>
+        )}
+      </section>
 
       {/* Latest blog post */}
       <LatestBlogPost />
 
       {/* Contact section */}
-      <section>
-        <h2 style={{ fontSize: "1.5rem", marginBottom: "1rem", fontWeight: "600", color: "var(--text)" }}>
-          Contact Us
+      <section style={{ marginTop: "5rem", paddingTop: "3rem", borderTop: "1px solid var(--stroke)" }}>
+        <h2 style={{
+          fontFamily: "var(--font-serif)",
+          fontSize: "1.75rem",
+          fontWeight: 700,
+          marginBottom: "1.5rem",
+          color: "var(--text)"
+        }}>
+          Stay Updated
         </h2>
-        <div style={{ display: "flex", gap: "0.5rem", maxWidth: "500px" }}>
+        <div style={{ display: "flex", gap: "1rem", maxWidth: "500px" }}>
           <input
             type="email"
             placeholder="Enter your email"
             style={{
               flex: 1,
-              padding: "0.75rem 1rem",
-              border: "1px solid rgba(0, 0, 0, 0.10)",
-              borderRadius: "8px",
+              padding: "0.875rem 1.25rem",
+              border: "1px solid var(--stroke)",
+              borderRadius: "0.375rem",
               fontSize: "1rem",
-              background: "rgba(255, 255, 255, 0.60)",
-              backdropFilter: "blur(8px)",
+              background: "rgba(255, 255, 255, 0.8)",
               color: "var(--text)",
+              fontFamily: "var(--font-sans)",
+              transition: "border-color 200ms ease"
             }}
           />
           <button
             type="button"
             style={{
-              padding: "0.75rem 1.5rem",
+              padding: "0.875rem 2rem",
               backgroundColor: "var(--text)",
               color: "var(--bg)",
               border: "none",
               fontSize: "1rem",
               cursor: "pointer",
-              borderRadius: "8px",
-              fontWeight: "500",
-              transition: "opacity 0.2s",
+              borderRadius: "0.375rem",
+              fontWeight: 600,
+              fontFamily: "var(--font-sans)",
+              transition: "opacity 200ms ease"
             }}
           >
             Subscribe

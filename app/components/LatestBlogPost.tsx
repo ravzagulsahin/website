@@ -7,32 +7,109 @@ export default async function LatestBlogPost() {
 
   if (!post) {
     return (
-      <section className="mt-10">
-        <h2 className="text-3xl font-semibold">Latest Blog Post</h2>
-        <p className="mt-3 text-muted-foreground">Henüz yayınlanmış yazı yok.</p>
+      <section style={{
+        marginTop: "5rem",
+        paddingTop: "3rem",
+        borderTop: "1px solid var(--stroke)"
+      }}>
+        <h2 style={{
+          fontFamily: "var(--font-serif)",
+          fontSize: "1.875rem",
+          fontWeight: 700,
+          color: "var(--text)",
+          margin: 0
+        }}>Latest Story</h2>
+        <p style={{
+          marginTop: "1rem",
+          color: "var(--muted)",
+          fontSize: "1rem"
+        }}>Henüz yayınlanmış yazı yok.</p>
       </section>
     );
   }
 
   const cover = post.cover_path ? r2.blog(post.cover_path) : null;
+  console.log('📝 LatestBlogPost - cover_path:', post.cover_path, '→ URL:', cover);
 
   return (
-    <section className="mt-10">
-      <h2 className="text-3xl font-semibold">Latest Blog Post</h2>
+    <section style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(12, 1fr)",
+      gap: "2rem",
+      alignItems: "start",
+      marginTop: "5rem",
+      marginBottom: "3rem",
+      paddingTop: "3rem",
+      borderTop: "1px solid var(--stroke)"
+    }}>
+      {/* Title (left, 4 cols) */}
+      <div style={{
+        gridColumn: "1 / 5",
+      }}>
+        <h2 style={{
+          fontFamily: "var(--font-serif)",
+          fontSize: "1.875rem",
+          fontWeight: 700,
+          margin: 0,
+          color: "var(--text)",
+          lineHeight: 1.1
+        }}>Latest Story</h2>
+      </div>
 
-      <div className="mt-5 rounded-3xl bg-white/70 shadow-sm border border-black/5 overflow-hidden">
+      {/* Content (right, 8 cols) */}
+      <div style={{
+        gridColumn: "5 / 13",
+        background: "var(--card)",
+        border: "1px solid var(--stroke)",
+        borderRadius: "0.5rem",
+        overflow: "hidden"
+      }}>
         {cover && (
-          <img src={cover} alt={post.title} className="h-56 w-full object-cover" />
+          <img 
+            src={cover} 
+            alt={post.title} 
+            style={{
+              width: "100%",
+              height: "280px",
+              objectFit: "cover"
+            }} 
+          />
         )}
-
-        <div className="p-8">
-          <h3 className="text-2xl font-semibold">{post.title}</h3>
-          {post.excerpt && <p className="mt-3 text-lg text-muted-foreground">{post.excerpt}</p>}
-
-          <div className="mt-6">
+        <div style={{ padding: "2rem" }}>
+          <h3 style={{
+            fontFamily: "var(--font-serif)",
+            fontSize: "1.5rem",
+            fontWeight: 700,
+            margin: 0,
+            marginBottom: "1rem",
+            color: "var(--text)",
+            lineHeight: 1.2
+          }}>
+            {post.title}
+          </h3>
+          {post.excerpt && (
+            <p style={{
+              fontSize: "1rem",
+              color: "var(--muted)",
+              margin: "1rem 0",
+              lineHeight: 1.6
+            }}>
+              {post.excerpt}
+            </p>
+          )}
+          <div style={{ marginTop: "1.5rem" }}>
             <Link
               href={`/blog/${post.slug}`}
-              className="inline-flex items-center rounded-xl bg-slate-900 px-5 py-3 text-white hover:opacity-90"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                paddingRight: "0.75rem",
+                color: "var(--accent)",
+                fontWeight: 600,
+                fontSize: "0.95rem",
+                textDecoration: "none",
+                transition: "opacity 200ms ease"
+              }}
             >
               Read More →
             </Link>

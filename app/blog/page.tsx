@@ -12,6 +12,9 @@ export default async function BlogPage() {
       <div className="mt-10 grid gap-8">
         {posts.map((p) => {
           const cover = p.cover_path ? r2.blog(p.cover_path) : null;
+          if (posts.indexOf(p) === 0) {
+            console.log('📚 Blog list - First post cover_path:', p.cover_path, '→ URL:', cover);
+          }
 
           return (
             <article key={p.id} className="rounded-3xl bg-white/70 border border-black/5 shadow-sm overflow-hidden">

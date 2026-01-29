@@ -53,6 +53,9 @@ export default function ImageSlider() {
       {/* ARKA PLAN KATMANI (Crossfade) */}
       {originalSlides.map((slide, index) => {
         const bgImage = slide.image_path ? r2.photos(slide.image_path) : null;
+        if (index === 0) {
+          console.log('🖼️ ImageSlider - First slide image URL:', bgImage);
+        }
         return (
           <div
             key={slide.id}
