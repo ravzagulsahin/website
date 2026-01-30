@@ -35,8 +35,10 @@ export default function RootLayout({
             <div className="pill">
               <Link href="/">Home</Link>
               <Link href="/about">About</Link>
+              <Link href="/gallery">Gallery</Link>
               <Link href="/magazines">Magazines</Link>
-              <Link href="/blog">Blog</Link>
+              <Link href="/blog">Blogs</Link>
+              <Link href="/admin">Admin</Link>
             </div>
           </div>
         </nav>
