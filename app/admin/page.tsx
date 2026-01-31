@@ -2,35 +2,32 @@
 
 import React, { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabaseClient";
+import MagazineManager from "./components/MagazineManager";
+import BlogManager from "./components/BlogManager";
+import GalleryManager from "./components/GalleryManager";
+
+type TabType = "magazines" | "blog" | "gallery";
 
 export default function AdminPage() {
-  // Login
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const [loginLoading, setLoginLoading] = useState(false);
-
+  // Auth state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
-  // Upload
-  const [title, setTitle] = useState("");
-  const [issueNumber, setIssueNumber] = useState("");
-  const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState<string | null>(null);
+  // Login state
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginLoading, setLoginLoading] = useState(false);
 
-  const MAX_PDF_SIZE = 50 * 1024 * 1024; // 50MB
+  // Tab state
+  const [activeTab, setActiveTab] = useState<TabType>("magazines");
 
-  // Oturum durumunu kontrol et ve Magic Link giriş yapan kullanıcıları tanı
+  // Session check on mount and listen for auth changes
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user) {
-        // Kullanıcı varsa admin tablosunda mı kontrol et
         const isAdminUser = await verifyAdmin(session.user.email!);
         if (isAdminUser) {
           setIsLoggedIn(true);
@@ -42,7 +39,6 @@ export default function AdminPage() {
 
     checkSession();
 
-    // Oturum durumunu canlı olarak dinle (Giriş yapınca anında formu değiştirir)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         checkSession();
@@ -56,21 +52,17 @@ export default function AdminPage() {
     return () => subscription.unsubscribe();
   }, []);
 
-  function sanitizeFileName(name: string) {
-    return name.replace(/[^a-z0-9.-]/gi, "_").toLowerCase();
-  }
-
   const verifyAdmin = async (email: string) => {
     try {
       const { data, error } = await supabase
         .from("admins")
-        .select("email")
+        .select("email, is_super_admin")
         .eq("email", email)
         .limit(1)
         .maybeSingle();
 
       if (error) throw error;
-      return !!data;
+      return !!data && data.is_super_admin === true;
     } catch (err) {
       console.error(err);
       return false;
@@ -83,7 +75,6 @@ export default function AdminPage() {
     setLoginLoading(true);
 
     try {
-      // First verify if this email is in the admins list
       const ok = await verifyAdmin(loginEmail);
       if (!ok) {
         setLoginError("Bu mail adresi admin olarak kayıtlı değil.");
@@ -94,7 +85,6 @@ export default function AdminPage() {
         return;
       }
 
-      // Send OTP to the email
       const { error } = await supabase.auth.signInWithOtp({
         email: loginEmail,
         options: {
@@ -106,7 +96,6 @@ export default function AdminPage() {
 
       alert("Mailine giriş kodu gönderildi! Lütfen mailini kontrol et.");
       setLoginEmail("");
-      setLoginPassword("");
     } catch (err: any) {
       console.error(err);
       setLoginError(err?.message ?? "Giriş kodu gönderilemedi.");
@@ -126,81 +115,18 @@ export default function AdminPage() {
     setLoginError(null);
   };
 
-  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setError(null);
-    const file = e.target.files?.[0] ?? null;
-    setCoverFile(file);
-  };
-
-  const handlePdfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setError(null);
-    const file = e.target.files?.[0] ?? null;
-    if (file && file.size > MAX_PDF_SIZE) {
-      setPdfFile(null);
-      setError("PDF dosyası 50MB'dan büyük olamaz.");
-      return;
-    }
-    setPdfFile(file);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-
-    if (!title.trim() || !issueNumber.trim() || !coverFile || !pdfFile) {
-      setError("Lütfen tüm alanları doldurun ve dosyaları seçin.");
-      return;
-    }
-
-    if (pdfFile.size > MAX_PDF_SIZE) {
-      setError("PDF dosyası 50MB'dan büyük olamaz.");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const ts = Date.now();
-      const coverName = `${ts}_${sanitizeFileName(coverFile.name)}`;
-      const pdfName = `${ts}_${sanitizeFileName(pdfFile.name)}`;
-
-      const coverPath = `covers/${coverName}`;
-      const { error: coverErr } = await supabase.storage.from("magazines").upload(coverPath, coverFile, { cacheControl: "3600", upsert: false });
-      if (coverErr) throw new Error(coverErr.message);
-
-      const pdfPath = `pdfs/${pdfName}`;
-      const { error: pdfErr } = await supabase.storage.from("magazines").upload(pdfPath, pdfFile, { cacheControl: "3600", upsert: false });
-      if (pdfErr) throw new Error(pdfErr.message);
-
-      const { data: coverUrlData } = supabase.storage.from("magazines").getPublicUrl(coverPath);
-      const coverUrl = (coverUrlData as any).publicUrl;
-
-      const { data: pdfUrlData } = supabase.storage.from("magazines").getPublicUrl(pdfPath);
-      const pdfUrl = (pdfUrlData as any).publicUrl;
-
-      const { error: dbError } = await supabase.from("magazines").insert([
-        {
-          title: title.trim(),
-          issue_number: Number(issueNumber),
-          cover_image: coverUrl,
-          pdf_url: pdfUrl,
-        },
-      ]);
-
-      if (dbError) throw new Error(dbError.message);
-
-      setSuccess("Dergi başarıyla yüklendi.");
-      setTitle("");
-      setIssueNumber("");
-      setCoverFile(null);
-      setPdfFile(null);
-      (e.target as HTMLFormElement).reset();
-    } catch (err: any) {
-      setError(err?.message ?? "Bilinmeyen bir hata oluştu.");
-    } finally {
-      setLoading(false);
-    }
+  const tabStyles = {
+    container: { display: "flex", gap: 8, borderBottom: "1px solid #e6e6e6", marginBottom: 24 } as const,
+    button: (isActive: boolean) => ({
+      padding: "8px 16px",
+      border: "none",
+      background: isActive ? "#111827" : "white",
+      color: isActive ? "white" : "#374151",
+      borderRadius: "6px 6px 0 0",
+      cursor: "pointer",
+      fontWeight: isActive ? 600 : 400,
+      fontSize: 14,
+    } as const),
   };
 
   return (
@@ -248,66 +174,34 @@ export default function AdminPage() {
             </button>
           </div>
 
-          <h2 style={{ marginTop: 0 }}>Dergi Yükle</h2>
+          {/* Tab Navigation */}
+          <div style={tabStyles.container}>
+            <button
+              onClick={() => setActiveTab("magazines")}
+              style={tabStyles.button(activeTab === "magazines")}
+            >
+              Dergiler
+            </button>
+            <button
+              onClick={() => setActiveTab("blog")}
+              style={tabStyles.button(activeTab === "blog")}
+            >
+              Blog
+            </button>
+            <button
+              onClick={() => setActiveTab("gallery")}
+              style={tabStyles.button(activeTab === "gallery")}
+            >
+              Galeri
+            </button>
+          </div>
 
-          <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: "block", fontWeight: 600, marginBottom: 6 }}>Başlık</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                style={{ width: "100%", padding: 8, borderRadius: 6, border: "1px solid #ccc" }}
-                placeholder="Dergi başlığı"
-                disabled={loading}
-              />
-            </div>
-
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: "block", fontWeight: 600, marginBottom: 6 }}>Sayı Numarası</label>
-              <input
-                type="number"
-                value={issueNumber}
-                onChange={(e) => setIssueNumber(e.target.value)}
-                required
-                style={{ width: 180, padding: 8, borderRadius: 6, border: "1px solid #ccc" }}
-                placeholder="1"
-                disabled={loading}
-              />
-            </div>
-
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: "block", fontWeight: 600, marginBottom: 6 }}>Kapak Görseli</label>
-              <input type="file" accept="image/*" onChange={handleCoverChange} disabled={loading} />
-            </div>
-
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: "block", fontWeight: 600, marginBottom: 6 }}>PDF Dosyası</label>
-              <input type="file" accept="application/pdf" onChange={handlePdfChange} disabled={loading} />
-              <div style={{ marginTop: 6, fontSize: 13, color: "#666" }}>Maksimum 50MB</div>
-            </div>
-
-            {error && <div style={{ color: "#b00020", marginBottom: 12, fontWeight: 600 }}>{error}</div>}
-
-            {success && <div style={{ color: "#166534", marginBottom: 12, fontWeight: 600 }}>{success}</div>}
-
-            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              <button
-                type="submit"
-                disabled={loading}
-                style={{ padding: "10px 16px", borderRadius: 6, background: "#111827", color: "white", border: "none" }}
-              >
-                Yükle
-              </button>
-
-              {loading && <div style={{ color: "#374151", fontWeight: 600 }}>Yükleniyor...</div>}
-            </div>
-          </form>
-
-          <hr style={{ marginTop: 20 }} />
-
-          <p style={{ marginTop: 12, color: "#6b7280" }}>Not: Dosyalar `magazines` bucket'ına yüklenecek ve URL'ler `magazines` tablosuna kaydedilecek.</p>
+          {/* Tab Content */}
+          <div>
+            {activeTab === "magazines" && <MagazineManager />}
+            {activeTab === "blog" && <BlogManager />}
+            {activeTab === "gallery" && <GalleryManager />}
+          </div>
         </div>
       )}
     </div>
