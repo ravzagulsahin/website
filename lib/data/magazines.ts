@@ -3,15 +3,15 @@ import { supabaseServer } from "@/lib/supabaseServer";
 export type Magazine = {
   id: string;
   title: string;
-  issue: string;
-  coverUrl: string | null;
-  pdfPath: string | null;
+  issue_number: string;
+  cover_image: string | null;
+  pdf_url: string | null;
 };
 
 export async function getMagazines(): Promise<Magazine[]> {
   const { data, error } = await supabaseServer
     .from("magazines")
-    .select("id, title, issue, cover_url, pdf_path")
+    .select("id, title, issue_number, cover_image, pdf_url")
     .eq("published", true)
     .order("created_at", { ascending: false });
 
@@ -23,8 +23,8 @@ export async function getMagazines(): Promise<Magazine[]> {
   return (data ?? []).map((row) => ({
     id: row.id,
     title: row.title,
-    issue: row.issue,
-    coverUrl: row.cover_url ?? null,
-    pdfPath: row.pdf_path ?? null,
+    issue_number: row.issue_number,
+    cover_image: row.cover_image ?? null,
+    pdf_url: row.pdf_url ?? null,
   }));
 }

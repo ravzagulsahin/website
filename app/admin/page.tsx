@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabaseClient";
 
 export default function AdminPage() {
   // Login
   const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loginLoading, setLoginLoading] = useState(false);
 
@@ -24,6 +23,38 @@ export default function AdminPage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   const MAX_PDF_SIZE = 50 * 1024 * 1024; // 50MB
+
+  // Oturum durumunu kontrol et ve Magic Link giriş yapan kullanıcıları tanı
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        // Kullanıcı varsa admin tablosunda mı kontrol et
+        const isAdminUser = await verifyAdmin(session.user.email!);
+        if (isAdminUser) {
+          setIsLoggedIn(true);
+          setIsAdmin(true);
+          setUserEmail(session.user.email!);
+        }
+      }
+    };
+
+    checkSession();
+
+    // Oturum durumunu canlı olarak dinle (Giriş yapınca anında formu değiştirir)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        checkSession();
+      } else {
+        setIsLoggedIn(false);
+        setIsAdmin(false);
+        setUserEmail(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   function sanitizeFileName(name: string) {
     return name.replace(/[^a-z0-9.-]/gi, "_").toLowerCase();
@@ -52,32 +83,33 @@ export default function AdminPage() {
     setLoginLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // First verify if this email is in the admins list
+      const ok = await verifyAdmin(loginEmail);
+      if (!ok) {
+        setLoginError("Bu mail adresi admin olarak kayıtlı değil.");
+        setIsLoggedIn(false);
+        setIsAdmin(false);
+        setUserEmail(null);
+        setLoginLoading(false);
+        return;
+      }
+
+      // Send OTP to the email
+      const { error } = await supabase.auth.signInWithOtp({
         email: loginEmail,
-        password: loginPassword,
+        options: {
+          emailRedirectTo: window.location.origin + "/admin",
+        },
       });
 
       if (error) throw error;
 
-      const session = (data as any)?.session;
-      const email = session?.user?.email ?? loginEmail;
-
-      const ok = await verifyAdmin(email);
-      if (!ok) {
-        setLoginError("Yetkiniz yok.");
-        await supabase.auth.signOut();
-        setIsLoggedIn(false);
-        setIsAdmin(false);
-        setUserEmail(null);
-        return;
-      }
-
-      setIsLoggedIn(true);
-      setIsAdmin(true);
-      setUserEmail(email);
+      alert("Mailine giriş kodu gönderildi! Lütfen mailini kontrol et.");
+      setLoginEmail("");
+      setLoginPassword("");
     } catch (err: any) {
       console.error(err);
-      setLoginError(err?.message ?? "Giriş yapılamadı.");
+      setLoginError(err?.message ?? "Giriş kodu gönderilemedi.");
       setIsLoggedIn(false);
       setIsAdmin(false);
       setUserEmail(null);
@@ -188,18 +220,6 @@ export default function AdminPage() {
                 required
                 style={{ width: "100%", padding: 8, borderRadius: 6, border: "1px solid #ccc" }}
                 placeholder="you@example.com"
-                disabled={loginLoading}
-              />
-            </div>
-
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: "block", fontWeight: 600, marginBottom: 6 }}>Şifre</label>
-              <input
-                type="password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                required
-                style={{ width: "100%", padding: 8, borderRadius: 6, border: "1px solid #ccc" }}
                 disabled={loginLoading}
               />
             </div>
