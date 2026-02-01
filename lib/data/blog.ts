@@ -9,6 +9,7 @@ export type BlogPost = {
   published: boolean;
   published_at: string | null;
   content: any; // jsonb
+  author_name?: string | null;
 };
 
 export async function getLatestBlogPost() {
@@ -24,6 +25,20 @@ export async function getLatestBlogPost() {
 
   if (error) throw new Error(error.message);
   return data as BlogPost | null;
+}
+
+export async function getLatestBlogPosts(limit: number = 2): Promise<BlogPost[]> {
+  const supabase = createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("id,title,slug,excerpt,cover_path,published,published_at")
+    .eq("published", true)
+    .order("published_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as BlogPost[];
 }
 
 export async function getBlogPosts() {
