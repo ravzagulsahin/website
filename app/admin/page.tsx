@@ -6,8 +6,9 @@ import MagazineManager from "./components/MagazineManager";
 import BlogManager from "./components/BlogManager";
 import GalleryManager from "./components/GalleryManager";
 import AdminManager from "./components/AdminManager";
+import AboutManager from "./components/AboutManager";
 
-type TabType = "magazines" | "blog" | "gallery" | "admins";
+type TabType = "magazines" | "blog" | "gallery" | "admins" | "about";
 
 export default function AdminPage() {
   // Auth state
@@ -201,6 +202,12 @@ export default function AdminPage() {
             >
               Admin Yönetimi
             </button>
+            <button
+              onClick={() => setActiveTab("about")}
+              style={tabStyles.button(activeTab === "about")}
+            >
+              Hakkımızda
+            </button>
           </div>
 
           {/* Tab Content */}
@@ -209,6 +216,7 @@ export default function AdminPage() {
             {activeTab === "blog" && <BlogManager />}
             {activeTab === "gallery" && <GalleryManager />}
             {activeTab === "admins" && <AdminManager />}
+            {activeTab === "about" && <AboutManager />}
           </div>
         </div>
       )}
