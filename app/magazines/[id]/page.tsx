@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import PdfViewer from "./PdfViewer";
 
-export default async function MagazineReadPage({ params }: { params: any }) {
+export default async function MagazineReadPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = createSupabaseServerClient();
 

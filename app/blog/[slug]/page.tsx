@@ -1,12 +1,9 @@
 import { notFound } from "next/navigation";
 import { getBlogPostBySlug } from "@/lib/data/blog";
 
-async function getParam<T>(params: Promise<T>) {
-  return await params;
-}
-
-export async function generateMetadata({ params }: { params: any }) {
-  const { slug } = await getParam(params);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = await params;
+  const slug = resolvedParams.slug;
   const post = await getBlogPostBySlug(slug);
 
   if (!post) return { title: 'Yazı Bulunamadı' };
@@ -25,7 +22,7 @@ export default async function BlogPostPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await getParam(params);
+  const { slug } = await params;
   const post = await getBlogPostBySlug(slug);
 
   if (!post) return notFound();

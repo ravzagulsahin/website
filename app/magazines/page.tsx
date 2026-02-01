@@ -36,9 +36,9 @@ export default async function MagazinesPage() {
                   position: "relative",
                 }}
               >
-                {magazine.coverUrl ? (
+                {magazine.cover_image ? (
                   <img
-                    src={magazine.coverUrl}
+                    src={magazine.cover_image}
                     alt={magazine.title}
                     style={{
                       width: "100%",
@@ -71,7 +71,7 @@ export default async function MagazinesPage() {
                     fontWeight: "400",
                   }}
                 >
-                  {magazine.issue}
+                  {magazine.issue_number}
                 </p>
               </div>
             </div>
