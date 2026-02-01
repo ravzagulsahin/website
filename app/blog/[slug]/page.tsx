@@ -35,9 +35,10 @@ export default async function BlogPostPage({
       )}
 
       <article className="prose prose-neutral mt-10 max-w-none">
-        <pre className="whitespace-pre-wrap rounded-2xl bg-black/5 p-4 text-sm">
-          {JSON.stringify(post.content, null, 2)}
-        </pre>
+        {/* JSON.stringify yerine doğrudan içeriği basıyoruz */}
+        <p className="whitespace-pre-wrap leading-relaxed">
+          {post.content?.raw || post.content}
+        </p>
       </article>
     </main>
   );
