@@ -54,10 +54,12 @@ export async function getBlogPosts() {
   return (data ?? []) as BlogPost[];
 }
 
-export async function getBlogPostBySlug(slug: string) {
+export type BlogPostWithAuthor = BlogPost & { author_full_name?: string | null };
+
+export async function getBlogPostBySlug(slug: string): Promise<BlogPostWithAuthor | null> {
   const supabase = createSupabaseServerClient();
 
-  const { data, error } = await supabase
+  const { data: postData, error } = await supabase
     .from("blog_posts")
     .select("id,title,slug,excerpt,cover_path,published,published_at,content")
     .eq("slug", slug)
@@ -65,5 +67,34 @@ export async function getBlogPostBySlug(slug: string) {
     .maybeSingle();
 
   if (error) throw new Error(error.message);
-  return data as BlogPost | null;
+  if (!postData) return null;
+
+  const post = postData as BlogPost & { author_id?: string | null };
+  const authorId = "author_id" in postData ? (postData as { author_id?: string }).author_id : null;
+
+  let authorFullName: string | null = null;
+
+  if (authorId) {
+    const { data: author } = await supabase
+      .from("admins")
+      .select("full_name")
+      .eq("id", authorId)
+      .single();
+    authorFullName = (author as { full_name?: string } | null)?.full_name ?? null;
+  }
+
+  if (authorFullName == null) {
+    const { data: firstAdmin } = await supabase
+      .from("admins")
+      .select("full_name")
+      .limit(1)
+      .maybeSingle();
+    authorFullName = (firstAdmin as { full_name?: string } | null)?.full_name ?? "Editör";
+  }
+
+  return {
+    ...post,
+    author_name: authorFullName,
+    author_full_name: authorFullName,
+  } as BlogPostWithAuthor;
 }

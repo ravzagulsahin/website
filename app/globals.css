@@ -42,6 +42,13 @@ html {
     line-height: 0.85;
     letter-spacing: -0.04em;
   }
+
+  .bg-brown-600 {
+    background-color: hsl(25 45% 32%);
+  }
+  .hover\:bg-brown-700:hover {
+    background-color: hsl(25 45% 26%);
+  }
 }
 
 /* PDF Styles - Olduğu gibi bırakıyoruz */
