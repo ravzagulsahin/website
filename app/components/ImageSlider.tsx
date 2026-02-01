@@ -68,9 +68,3 @@ export default function ImageSlider({ slides }: { slides?: Slide[] }) {
     </div>
   );
 }
-  cursor: 'pointer',
-  transition: 'background 0.3s',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-});

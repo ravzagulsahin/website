@@ -21,15 +21,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-            <p className="text-xs uppercase tracking-[0.3em] opacity-50 max-w-[200px] leading-relaxed">
-              Akdeniz Üniversitesi Psikoloji Topluluğu Dijital Yayını.
-            </p>
-          </div>
-          <div className="md:col-span-8 w-full aspect-video md:aspect-[16/7] overflow-hidden">
-            <ImageSlider slides={slides} />
-          </div>
-        </div>
-      </section>
 
       {/* Öne Çıkan Dergiler */}
       <section className="max-w-7xl mx-auto px-6 py-24">

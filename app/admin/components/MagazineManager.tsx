@@ -36,7 +36,7 @@ export default function MagazineManager() {
       // 3. DB Kayıt
       const { error: dbErr } = await supabase.from("magazines").insert([{
         title,
-        issue_number: Number(issueNumber),
+        issue_number: issueNumber,
         description,
         cover_image: cUrl.publicUrl,
         pdf_url: pUrl.publicUrl,
