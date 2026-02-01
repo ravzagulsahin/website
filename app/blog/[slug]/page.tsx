@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { getBlogPostBySlug } from "@/lib/data/blog";
-import { r2 } from "@/lib/r2";
 
 async function getParam<T>(params: Promise<T>) {
   return await params;
@@ -17,7 +16,7 @@ export default async function BlogPostPage({
 
   if (!post) return notFound();
 
-  const cover = post.cover_path ? r2.blog(post.cover_path) : null;
+  const cover = post.cover_path;
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
