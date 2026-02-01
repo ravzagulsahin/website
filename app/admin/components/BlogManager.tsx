@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import TiptapEditor from "./TiptapEditor";
 
 export default function BlogManager() {
   const [title, setTitle] = useState("");
@@ -76,7 +77,13 @@ export default function BlogManager() {
         <h2 className="text-xl font-bold">Blog Yazısı Oluştur</h2>
         <input type="text" placeholder="Başlık" value={title} onChange={e => setTitle(e.target.value)} className="w-full p-2 border rounded text-black" required />
         <input type="text" placeholder="Kısa Özet" value={excerpt} onChange={e => setExcerpt(e.target.value)} className="w-full p-2 border rounded text-black" required />
-        <textarea placeholder="İçerik..." value={content} onChange={e => setContent(e.target.value)} className="w-full p-2 border rounded h-40 text-black" required />
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-zinc-700">İçerik</label>
+          <TiptapEditor 
+            content={content} 
+            onChange={(html) => setContent(html)} 
+          />
+        </div>
         <div className="text-black">Kapak: <input type="file" onChange={e => setCoverFile(e.target.files![0])} accept="image/*" required /></div>
         <button type="submit" disabled={loading} className="bg-black text-white px-6 py-2 rounded w-full">{loading ? "Yayınlanıyor..." : "Blog Yayınla"}</button>
         {success && <p className="text-green-600 font-bold">{success}</p>}

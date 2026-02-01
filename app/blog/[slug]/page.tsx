@@ -49,11 +49,11 @@ export default async function BlogPostPage({
         <p className="mt-6 text-lg text-muted-foreground">{post.excerpt}</p>
       )}
 
-      <article className="prose prose-neutral mt-10 max-w-none">
-        {/* JSON.stringify yerine doğrudan içeriği basıyoruz */}
-        <p className="whitespace-pre-wrap leading-relaxed">
-          {post.content?.raw || post.content}
-        </p>
+      <article className="prose prose-zinc lg:prose-xl mx-auto mt-12 px-4">
+        <div 
+          dangerouslySetInnerHTML={{ __html: post.content?.raw || post.content }} 
+          className="leading-relaxed"
+        />
       </article>
     </main>
   );
