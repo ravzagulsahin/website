@@ -5,6 +5,21 @@ async function getParam<T>(params: Promise<T>) {
   return await params;
 }
 
+export async function generateMetadata({ params }: { params: any }) {
+  const { slug } = await getParam(params);
+  const post = await getBlogPostBySlug(slug);
+
+  if (!post) return { title: 'Yazı Bulunamadı' };
+
+  return {
+    title: `${post.title} | Psikoloji Dergisi`,
+    description: post.excerpt,
+    openGraph: {
+      images: [post.cover_path],
+    },
+  };
+}
+
 export default async function BlogPostPage({
   params,
 }: {

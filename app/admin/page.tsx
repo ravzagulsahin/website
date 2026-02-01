@@ -5,8 +5,9 @@ import { supabase } from "../../lib/supabaseClient";
 import MagazineManager from "./components/MagazineManager";
 import BlogManager from "./components/BlogManager";
 import GalleryManager from "./components/GalleryManager";
+import AdminManager from "./components/AdminManager";
 
-type TabType = "magazines" | "blog" | "gallery";
+type TabType = "magazines" | "blog" | "gallery" | "admins";
 
 export default function AdminPage() {
   // Auth state
@@ -194,6 +195,12 @@ export default function AdminPage() {
             >
               Galeri
             </button>
+            <button
+              onClick={() => setActiveTab("admins")}
+              style={tabStyles.button(activeTab === "admins")}
+            >
+              Admin Yönetimi
+            </button>
           </div>
 
           {/* Tab Content */}
@@ -201,6 +208,7 @@ export default function AdminPage() {
             {activeTab === "magazines" && <MagazineManager />}
             {activeTab === "blog" && <BlogManager />}
             {activeTab === "gallery" && <GalleryManager />}
+            {activeTab === "admins" && <AdminManager />}
           </div>
         </div>
       )}
