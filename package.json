@@ -9,7 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@floating-ui/dom": "^1.7.5",
     "@supabase/supabase-js": "^2.91.0",
+    "@tiptap/extension-bubble-menu": "^3.18.0",
+    "@tiptap/extension-floating-menu": "^3.18.0",
+    "@tiptap/extension-image": "^3.18.0",
     "@tiptap/pm": "^3.18.0",
     "@tiptap/react": "^3.18.0",
     "@tiptap/starter-kit": "^3.18.0",
