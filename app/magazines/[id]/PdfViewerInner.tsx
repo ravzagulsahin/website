@@ -17,8 +17,13 @@ export default function PdfViewerInner({ url }: { url: string }) {
   const [width, setWidth] = useState(800);
 
   useEffect(() => {
-    // Sadece tarayıcıda çalışır
-    setWidth(Math.min(window.innerWidth - 40, 900));
+    const updateWidth = () => {
+      const maxW = Math.min(window.innerWidth - 48, 900);
+      setWidth(maxW);
+    };
+    updateWidth();
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
   return (

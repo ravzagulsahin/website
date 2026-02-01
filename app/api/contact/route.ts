@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function POST(request: Request) {
   try {
-    const { email, message } = await request.json();
+    const body = await request.json();
+    const email = typeof body?.email === "string" ? body.email.trim() : "";
+    const message = typeof body?.message === "string" ? body.message.trim() : "";
 
     // Validate input
     if (!email || !message) {
@@ -16,7 +16,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
@@ -25,41 +24,51 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get all admin emails from the database
     const supabase = createSupabaseServerClient();
+
+    // 1. Save message to contact_messages first
+    const { error: insertError } = await supabase
+      .from("contact_messages")
+      .insert({ email, message });
+
+    if (insertError) {
+      console.error("Contact API: insert error", insertError);
+      return NextResponse.json(
+        { error: "Mesaj kaydedilemedi. Lütfen daha sonra tekrar deneyin." },
+        { status: 500 }
+      );
+    }
+
+    // 2. Get all admin emails
     const { data: admins, error: adminError } = await supabase
       .from("admins")
       .select("email");
 
     if (adminError) {
-      console.error("Error fetching admins:", adminError);
+      console.error("Contact API: fetch admins error", adminError);
       return NextResponse.json(
         { error: "Bir hata oluştu. Lütfen daha sonra tekrar deneyin." },
         { status: 500 }
       );
     }
 
-    const adminEmails = admins?.map((admin) => admin.email).filter(Boolean) || [];
+    const adminEmails = admins?.map((a) => a.email).filter(Boolean) as string[];
 
     if (adminEmails.length === 0) {
-      console.error("No admin emails found");
+      return NextResponse.json({ success: true });
+    }
+
+    // 3. Send email to admins via Resend
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      console.error("Contact API: RESEND_API_KEY is not set");
       return NextResponse.json(
-        { error: "Sistem hatası. Lütfen daha sonra tekrar deneyin." },
+        { error: "E-posta servisi yapılandırılmamış. Lütfen daha sonra tekrar deneyin." },
         { status: 500 }
       );
     }
 
-    // Save the message to the database (optional)
-    const { error: insertError } = await supabase
-      .from("contact_messages")
-      .insert({ email, message });
-
-    if (insertError) {
-      console.error("Error saving contact message:", insertError);
-      // Continue anyway - email sending is more important
-    }
-
-    // Send email to all admins
+    const resend = new Resend(apiKey);
     const { error: emailError } = await resend.emails.send({
       from: "İletişim Formu <onboarding@resend.dev>",
       to: adminEmails,
@@ -75,7 +84,7 @@ export async function POST(request: Request) {
           </p>
           <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <p style="color: #333; white-space: pre-wrap; margin: 0;">
-              ${message}
+              ${message.replace(/</g, "&lt;").replace(/>/g, "&gt;")}
             </p>
           </div>
           <p style="color: #999; font-size: 12px; margin-top: 30px;">
@@ -86,7 +95,7 @@ export async function POST(request: Request) {
     });
 
     if (emailError) {
-      console.error("Error sending email:", emailError);
+      console.error("Contact API: Resend error", emailError);
       return NextResponse.json(
         { error: "E-posta gönderilemedi. Lütfen daha sonra tekrar deneyin." },
         { status: 500 }
