@@ -1,6 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-// Merkezi Tip Tanımları
+// Centralized Type Definitions
 export type BlogPost = {
   id: string;
   title: string;
@@ -9,19 +9,12 @@ export type BlogPost = {
   cover_path: string | null;
   published: boolean;
   published_at: string | null;
-  content: any; // jsonb
-  // İlişkisel veri için author objesi ekliyoruz
-  author?: {
-    full_name: string;
-  } | null;
+  content: unknown; // jsonb stored as unknown
+  author?: { full_name?: string | null } | null;
 };
 
-// Yazar bilgisiyle birlikte dönen tip (UI tarafında kolaylık için)
 export type BlogPostWithAuthor = BlogPost & { author_name: string };
 
-/**
- * İlişkisel sorgu için kullanılan ortak sütun seçimi
- */
 const BLOG_SELECT_QUERY = `
   id,
   title,
@@ -34,6 +27,15 @@ const BLOG_SELECT_QUERY = `
   author:admins (full_name)
 `;
 
+function formatAuthorName(post: BlogPost | null): BlogPostWithAuthor | null {
+  if (!post) return null;
+  const authorName = post.author?.full_name ?? "Editör";
+  return {
+    ...post,
+    author_name: authorName,
+  };
+}
+
 export async function getLatestBlogPost(): Promise<BlogPostWithAuthor | null> {
   const supabase = createSupabaseServerClient();
 
@@ -45,7 +47,8 @@ export async function getLatestBlogPost(): Promise<BlogPostWithAuthor | null> {
     .limit(1)
     .maybeSingle();
 
-  if (error) throw new Error(error.message);
+  // Graceful fallback: return null when an error occurs
+  if (error || !data) return null;
   return formatAuthorName(data);
 }
 
@@ -59,8 +62,8 @@ export async function getLatestBlogPosts(limit: number = 2): Promise<BlogPostWit
     .order("published_at", { ascending: false })
     .limit(limit);
 
-  if (error) throw new Error(error.message);
-  return (data ?? []).map(formatAuthorName) as BlogPostWithAuthor[];
+  if (error || !Array.isArray(data)) return [];
+  return (data as BlogPost[]).map((d) => formatAuthorName(d)).filter((p): p is BlogPostWithAuthor => p !== null);
 }
 
 export async function getBlogPosts(): Promise<BlogPostWithAuthor[]> {
@@ -72,13 +75,10 @@ export async function getBlogPosts(): Promise<BlogPostWithAuthor[]> {
     .eq("published", true)
     .order("published_at", { ascending: false });
 
-  if (error) throw new Error(error.message);
-  return (data ?? []).map(formatAuthorName) as BlogPostWithAuthor[];
+  if (error || !Array.isArray(data)) return [];
+  return (data as BlogPost[]).map((d) => formatAuthorName(d)).filter((p): p is BlogPostWithAuthor => p !== null);
 }
 
-/**
- * Slug üzerinden tekil yazı getiren ve ilişkisel yazar verisini işleyen ana fonksiyon
- */
 export async function getBlogPostBySlug(slug: string): Promise<BlogPostWithAuthor | null> {
   const supabase = createSupabaseServerClient();
 
@@ -89,21 +89,6 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPostWithAutho
     .eq("published", true)
     .maybeSingle();
 
-  if (error) throw new Error(error.message);
-  if (!data) return null;
-
+  if (error || !data) return null;
   return formatAuthorName(data);
-}
-
-/**
- * Helper: Gelen verideki ilişkisel 'author' objesini 'author_name' string'ine dönüştürür
- * Eski koddaki fallback (Editör) mantığını da burada koruyoruz.
- */
-function formatAuthorName(post: any): BlogPostWithAuthor | null {
-  if (!post) return null;
-  
-  return {
-    ...post,
-    author_name: post.author?.full_name ?? "Editör"
-  };
 }

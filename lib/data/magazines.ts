@@ -9,6 +9,16 @@ export type Magazine = {
   publish_date: string | null;
 };
 
+function safeString(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  return String(value);
+}
+
+function safeNullableString(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  return String(value);
+}
+
 export async function getMagazines(): Promise<Magazine[]> {
   const supabase = createSupabaseServerClient();
 
@@ -18,17 +28,28 @@ export async function getMagazines(): Promise<Magazine[]> {
     .eq("published", true)
     .order("publish_date", { ascending: false });
 
-  if (error) {
-    console.error("getMagazines error:", error);
+  // Graceful fallback: return empty list on error or unexpected shape.
+  if (error || !Array.isArray(data)) {
     return [];
   }
 
-  return (data ?? []).map((row: any) => ({
-    id: row.id,
-    title: row.title,
-    pdf_url: row.pdf_url ?? null,
-    cover_path: row.cover_path ?? null,
-    description: row.description ?? null,
-    publish_date: row.publish_date ?? null,
-  }));
+  const rows = data as Array<Record<string, unknown>>;
+
+  return rows
+    .map((row) => {
+      const id = safeString(row.id);
+      const title = safeString(row.title);
+      if (!id || !title) return null;
+
+      const magazine: Magazine = {
+        id,
+        title,
+        pdf_url: safeNullableString(row.pdf_url),
+        cover_path: safeNullableString(row.cover_path),
+        description: safeNullableString(row.description),
+        publish_date: safeNullableString(row.publish_date),
+      };
+      return magazine;
+    })
+    .filter((m): m is Magazine => m !== null);
 }
