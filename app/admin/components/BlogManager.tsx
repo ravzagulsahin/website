@@ -54,18 +54,25 @@ export default function BlogManager() {
 
       // Eğer yeni kapak seçilmişse, önce API üzerinden yükle ve public URL al
       if (coverFile) {
+        // Client-side basic validation
+        const maxImageBytes = 5 * 1024 * 1024;
+        if (!coverFile.type.startsWith("image/")) throw new Error("Kapak görseli geçerli bir resim olmalı.");
+        if (coverFile.size > maxImageBytes) throw new Error("Kapak görseli 5MB'tan büyük olamaz.");
+
         const buf = await coverFile.arrayBuffer();
         const base64 = Buffer.from(buf).toString("base64");
         const uploadRes = await fetch("/api/admin/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            filename: `${Date.now()}_${coverFile.name.replace(/\s+/g, "_")}`,
+            filename: `covers/${Date.now()}_${coverFile.name.replace(/\s+/g, "_")}`,
             file: base64,
             contentType: coverFile.type,
+            bucket: "blog_images",
           }),
         });
         const uploadJson = await uploadRes.json();
+        if (!uploadRes.ok) throw new Error(uploadJson.error ?? "Kapak yükleme hatası");
         coverUrl = uploadJson.publicUrl ?? coverUrl;
       }
 

@@ -18,11 +18,32 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
     input.onchange = async () => {
       if (input.files?.length) {
         const file = input.files[0];
-        const path = `blog_content/${Date.now()}_${file.name}`;
-        const { error } = await supabase.storage.from("blog_images").upload(path, file);
-        if (error) return alert("Yükleme hatası!");
-        const { data } = supabase.storage.from("blog_images").getPublicUrl(path);
-        editor.chain().focus().setImage({ src: data.publicUrl }).run();
+        // Validate file size/type on client before sending
+        const maxImageBytes = 5 * 1024 * 1024;
+        if (!file.type.startsWith('image/')) return alert('Lütfen bir görsel dosyası seçin.');
+        if (file.size > maxImageBytes) return alert('Görsel 5MB sınırını aşıyor.');
+
+        const buf = await file.arrayBuffer();
+        const base64 = Buffer.from(buf).toString('base64');
+        try {
+          const res = await fetch('/api/admin/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              filename: `blog_content/${Date.now()}_${file.name.replace(/\s+/g, '_')}`,
+              file: base64,
+              contentType: file.type,
+              bucket: 'blog_images'
+            })
+          });
+          const json = await res.json();
+          if (!res.ok) {
+            return alert(json.error || 'Yükleme hatası');
+          }
+          editor.chain().focus().setImage({ src: json.publicUrl }).run();
+        } catch (e) {
+          alert('Yükleme sırasında bir hata oluştu.');
+        }
       }
     };
     input.click();

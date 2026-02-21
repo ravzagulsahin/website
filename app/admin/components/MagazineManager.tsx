@@ -21,28 +21,58 @@ export default function MagazineManager() {
     try {
       const ts = Date.now();
       
-      // 1. Kapak Yükle
-      const coverPath = `covers/${ts}_${coverFile?.name.replace(/\s+/g, '_')}`;
-      const { error: coverErr } = await supabase.storage.from("magazines").upload(coverPath, coverFile!);
-      if (coverErr) throw coverErr;
-      const { data: cUrl } = supabase.storage.from("magazines").getPublicUrl(coverPath);
+      if (!coverFile) throw new Error("Kapak dosyası gerekli");
+      if (!pdfFile) throw new Error("PDF dosyası gerekli");
 
-      // 2. PDF Yükle
-      const pdfPath = `pdfs/${ts}_${pdfFile?.name.replace(/\s+/g, '_')}`;
-      const { error: pdfErr } = await supabase.storage.from("magazines").upload(pdfPath, pdfFile!);
-      if (pdfErr) throw pdfErr;
-      const { data: pUrl } = supabase.storage.from("magazines").getPublicUrl(pdfPath);
+      // Client-side validations
+      const maxImageBytes = 5 * 1024 * 1024;
+      const maxPdfBytes = 40 * 1024 * 1024;
+      if (!coverFile.type.startsWith("image/")) throw new Error("Kapak görüntüsü geçerli bir resim olmalı.");
+      if (coverFile.size > maxImageBytes) throw new Error("Kapak 5MB'tan büyük olamaz.");
+      if (pdfFile.type !== "application/pdf") throw new Error("Lütfen geçerli bir PDF seçin.");
+      if (pdfFile.size > maxPdfBytes) throw new Error("PDF 40MB'tan büyük olamaz.");
+
+      // Upload cover via server endpoint
+      const coverBuf = await coverFile.arrayBuffer();
+      const coverBase64 = Buffer.from(coverBuf).toString("base64");
+      const coverRes = await fetch("/api/admin/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: `covers/${ts}_${coverFile.name.replace(/\s+/g, "_")}`,
+          file: coverBase64,
+          contentType: coverFile.type,
+          bucket: "magazines",
+        }),
+      });
+      const coverJson = await coverRes.json();
+      if (!coverRes.ok) throw new Error(coverJson.error ?? "Kapak yükleme başarısız");
+
+      // Upload PDF via server endpoint
+      const pdfBuf = await pdfFile.arrayBuffer();
+      const pdfBase64 = Buffer.from(pdfBuf).toString("base64");
+      const pdfRes = await fetch("/api/admin/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: `pdfs/${ts}_${pdfFile.name.replace(/\s+/g, "_")}`,
+          file: pdfBase64,
+          contentType: pdfFile.type,
+          bucket: "magazines",
+        }),
+      });
+      const pdfJson = await pdfRes.json();
+      if (!pdfRes.ok) throw new Error(pdfJson.error ?? "PDF yükleme başarısız");
 
       // 3. DB Kayıt
       const { error: dbErr } = await supabase.from("magazines").insert([{
         title,
         issue_number: issueNumber,
         description,
-        cover_image: cUrl.publicUrl,
-        pdf_url: pUrl.publicUrl,
+        cover_image: coverJson.publicUrl,
+        pdf_url: pdfJson.publicUrl,
         published: true
       }]);
-
       if (dbErr) throw dbErr;
       setSuccess("Dergi başarıyla yüklendi!");
       setTitle("");

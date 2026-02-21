@@ -4,14 +4,30 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const { filename, file, contentType } = await request.json();
-    if (!filename || !file) {
-      return NextResponse.json({ error: "Missing file or filename" }, { status: 400 });
+    const { filename, file, contentType, bucket: bucketName = "blog_images" } = await request.json();
+    if (!filename || !file || !contentType) {
+      return NextResponse.json({ error: "Missing file, filename or contentType" }, { status: 400 });
     }
 
+    // Basic validations
+    const allowedImageTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    const maxImageBytes = 5 * 1024 * 1024; // 5MB
+    const maxPdfBytes = 20 * 1024 * 1024; // 20MB
+
     const buffer = Buffer.from(file, "base64");
+    if (contentType.startsWith("image/") && buffer.length > maxImageBytes) {
+      return NextResponse.json({ error: "Image exceeds max size of 5MB" }, { status: 400 });
+    }
+    if (contentType === "application/pdf" && buffer.length > maxPdfBytes) {
+      return NextResponse.json({ error: "PDF exceeds max size of 20MB" }, { status: 400 });
+    }
+    if (contentType.startsWith("image/") && !allowedImageTypes.includes(contentType)) {
+      return NextResponse.json({ error: "Unsupported image type" }, { status: 400 });
+    }
+
     const supabase = createSupabaseServerClient();
-    const bucket = supabase.storage.from("blog_images");
+    const bucket = supabase.storage.from(bucketName);
+
     const { error: uploadError } = await bucket.upload(filename, buffer, {
       contentType,
       cacheControl: "public, max-age=3600",
@@ -23,7 +39,8 @@ export async function POST(request: NextRequest) {
     }
 
     const { data } = bucket.getPublicUrl(filename);
-    return NextResponse.json({ publicUrl: data.publicUrl });
+    // Return both publicUrl and the storage path we wrote (useful for cleanup)
+    return NextResponse.json({ publicUrl: data.publicUrl, path: filename, bucket: bucketName });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
