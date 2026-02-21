@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+// Merkezi Tip Tanımları
 export type BlogPost = {
   id: string;
   title: string;
@@ -9,92 +10,100 @@ export type BlogPost = {
   published: boolean;
   published_at: string | null;
   content: any; // jsonb
-  author_name?: string | null;
+  // İlişkisel veri için author objesi ekliyoruz
+  author?: {
+    full_name: string;
+  } | null;
 };
 
-export async function getLatestBlogPost() {
+// Yazar bilgisiyle birlikte dönen tip (UI tarafında kolaylık için)
+export type BlogPostWithAuthor = BlogPost & { author_name: string };
+
+/**
+ * İlişkisel sorgu için kullanılan ortak sütun seçimi
+ */
+const BLOG_SELECT_QUERY = `
+  id,
+  title,
+  slug,
+  excerpt,
+  cover_path,
+  published,
+  published_at,
+  content,
+  author:admins (full_name)
+`;
+
+export async function getLatestBlogPost(): Promise<BlogPostWithAuthor | null> {
   const supabase = createSupabaseServerClient();
 
   const { data, error } = await supabase
     .from("blog_posts")
-    .select("id,title,slug,excerpt,cover_path,published,published_at")
+    .select(BLOG_SELECT_QUERY)
     .eq("published", true)
     .order("published_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
   if (error) throw new Error(error.message);
-  return data as BlogPost | null;
+  return formatAuthorName(data);
 }
 
-export async function getLatestBlogPosts(limit: number = 2): Promise<BlogPost[]> {
+export async function getLatestBlogPosts(limit: number = 2): Promise<BlogPostWithAuthor[]> {
   const supabase = createSupabaseServerClient();
 
   const { data, error } = await supabase
     .from("blog_posts")
-    .select("id,title,slug,excerpt,cover_path,published,published_at")
+    .select(BLOG_SELECT_QUERY)
     .eq("published", true)
     .order("published_at", { ascending: false })
     .limit(limit);
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as BlogPost[];
+  return (data ?? []).map(formatAuthorName) as BlogPostWithAuthor[];
 }
 
-export async function getBlogPosts() {
+export async function getBlogPosts(): Promise<BlogPostWithAuthor[]> {
   const supabase = createSupabaseServerClient();
 
   const { data, error } = await supabase
     .from("blog_posts")
-    .select("id,title,slug,excerpt,cover_path,published,published_at")
+    .select(BLOG_SELECT_QUERY)
     .eq("published", true)
     .order("published_at", { ascending: false });
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as BlogPost[];
+  return (data ?? []).map(formatAuthorName) as BlogPostWithAuthor[];
 }
 
-export type BlogPostWithAuthor = BlogPost & { author_full_name?: string | null };
-
+/**
+ * Slug üzerinden tekil yazı getiren ve ilişkisel yazar verisini işleyen ana fonksiyon
+ */
 export async function getBlogPostBySlug(slug: string): Promise<BlogPostWithAuthor | null> {
   const supabase = createSupabaseServerClient();
 
-  const { data: postData, error } = await supabase
+  const { data, error } = await supabase
     .from("blog_posts")
-    .select("id,title,slug,excerpt,cover_path,published,published_at,content")
+    .select(BLOG_SELECT_QUERY)
     .eq("slug", slug)
     .eq("published", true)
     .maybeSingle();
 
   if (error) throw new Error(error.message);
-  if (!postData) return null;
+  if (!data) return null;
 
-  const post = postData as BlogPost & { author_id?: string | null };
-  const authorId = "author_id" in postData ? (postData as { author_id?: string }).author_id : null;
+  return formatAuthorName(data);
+}
 
-  let authorFullName: string | null = null;
-
-  if (authorId) {
-    const { data: author } = await supabase
-      .from("admins")
-      .select("full_name")
-      .eq("id", authorId)
-      .single();
-    authorFullName = (author as { full_name?: string } | null)?.full_name ?? null;
-  }
-
-  if (authorFullName == null) {
-    const { data: firstAdmin } = await supabase
-      .from("admins")
-      .select("full_name")
-      .limit(1)
-      .maybeSingle();
-    authorFullName = (firstAdmin as { full_name?: string } | null)?.full_name ?? "Editör";
-  }
-
+/**
+ * Helper: Gelen verideki ilişkisel 'author' objesini 'author_name' string'ine dönüştürür
+ * Eski koddaki fallback (Editör) mantığını da burada koruyoruz.
+ */
+function formatAuthorName(post: any): BlogPostWithAuthor | null {
+  if (!post) return null;
+  
   return {
     ...post,
-    author_name: authorFullName,
-    author_full_name: authorFullName,
-  } as BlogPostWithAuthor;
+    author_name: post.author?.full_name ?? "Editör"
+  };
 }
