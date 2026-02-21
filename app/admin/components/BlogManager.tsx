@@ -1,8 +1,6 @@
-"use client";
+\"use client\";
 import React, { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
 import TiptapEditor from "./TiptapEditor";
-
 export default function BlogManager() {
   // Form State
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -15,12 +13,17 @@ export default function BlogManager() {
   const [loading, setLoading] = useState(false);
   const [posts, setPosts] = useState<any[]>([]);
 
+  // Centralized API endpoints are used instead of direct supabase usage from the client.
   const fetchPosts = async () => {
-    const { data } = await supabase.from("blog_posts").select("*").order("created_at", { ascending: false });
-    if (data) setPosts(data);
+    const res = await fetch("/api/admin/blogs");
+    if (!res.ok) return setPosts([]);
+    const data = await res.json();
+    setPosts(data ?? []);
   };
 
-  useEffect(() => { fetchPosts(); }, []);
+  useEffect(() => {
+    fetchPosts();
+  }, []);
 
   // Düzenleme modunu açar
   const handleEdit = (post: any) => {
@@ -49,11 +52,21 @@ export default function BlogManager() {
     try {
       let coverUrl = existingCover;
 
+      // Eğer yeni kapak seçilmişse, önce API üzerinden yükle ve public URL al
       if (coverFile) {
-        const path = `${Date.now()}_${coverFile.name.replace(/\s+/g, '_')}`;
-        await supabase.storage.from("blog_images").upload(path, coverFile);
-        const { data } = supabase.storage.from("blog_images").getPublicUrl(path);
-        coverUrl = data.publicUrl;
+        const buf = await coverFile.arrayBuffer();
+        const base64 = Buffer.from(buf).toString("base64");
+        const uploadRes = await fetch("/api/admin/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: `${Date.now()}_${coverFile.name.replace(/\s+/g, "_")}`,
+            file: base64,
+            contentType: coverFile.type,
+          }),
+        });
+        const uploadJson = await uploadRes.json();
+        coverUrl = uploadJson.publicUrl ?? coverUrl;
       }
 
       const blogData = {
@@ -61,20 +74,28 @@ export default function BlogManager() {
         excerpt,
         content: { raw: content },
         cover_path: coverUrl,
-        slug: title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''),
+        slug: title.toLowerCase().replace(/ /g, "-").replace(/[^\\w-]+/g, ""),
       };
 
       if (editingId) {
-        await supabase.from("blog_posts").update(blogData).eq("id", editingId);
+        await fetch(`/api/admin/blogs`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: editingId, ...blogData }),
+        });
       } else {
-        await supabase.from("blog_posts").insert([{ ...blogData, published: true, published_at: new Date().toISOString() }]);
+        await fetch(`/api/admin/blogs`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...blogData, published: true, published_at: new Date().toISOString() }),
+        });
       }
 
       resetForm();
       fetchPosts();
       alert("Başarıyla kaydedildi!");
     } catch (err: any) {
-      alert(err.message);
+      alert(err.message || "Bir hata oluştu");
     } finally {
       setLoading(false);
     }
@@ -82,10 +103,16 @@ export default function BlogManager() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Bu yazıyı silmek istediğine emin misin?")) return;
-    const { error } = await supabase.from("blog_posts").delete().eq("id", id);
-    if (!error) {
+    const res = await fetch(`/api/admin/blogs`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (res.ok) {
       fetchPosts();
       alert("Yazı silindi!");
+    } else {
+      alert("Silme işlemi başarısız.");
     }
   };
 
