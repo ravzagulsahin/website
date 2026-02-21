@@ -1,4 +1,4 @@
-\"use client\";
+"use client";
 import React, { useState, useEffect } from "react";
 import TiptapEditor from "./TiptapEditor";
 export default function BlogManager() {
