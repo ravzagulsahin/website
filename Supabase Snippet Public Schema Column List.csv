@@ -1,0 +1,41 @@
+table_schema,table_name,column_name,data_type
+public,about_content,id,uuid
+public,about_content,content,text
+public,about_content,updated_at,timestamp with time zone
+public,admins,id,uuid
+public,admins,email,text
+public,admins,is_super_admin,boolean
+public,admins,created_at,timestamp with time zone
+public,admins,full_name,text
+public,blog_posts,id,uuid
+public,blog_posts,title,text
+public,blog_posts,slug,text
+public,blog_posts,excerpt,text
+public,blog_posts,content,jsonb
+public,blog_posts,cover_path,text
+public,blog_posts,published,boolean
+public,blog_posts,published_at,timestamp with time zone
+public,blog_posts,created_at,timestamp with time zone
+public,blog_posts,author_id,uuid
+public,contact_messages,id,uuid
+public,contact_messages,email,text
+public,contact_messages,message,text
+public,contact_messages,created_at,timestamp with time zone
+public,home_gallery,id,uuid
+public,home_gallery,title,text
+public,home_gallery,subtitle,text
+public,home_gallery,image_url,text
+public,home_gallery,image_path,text
+public,home_gallery,order_index,integer
+public,home_gallery,active,boolean
+public,home_gallery,created_at,timestamp with time zone
+public,magazines,id,uuid
+public,magazines,title,text
+public,magazines,description,text
+public,magazines,image_url,text
+public,magazines,is_featured,boolean
+public,magazines,published,boolean
+public,magazines,created_at,timestamp with time zone
+public,magazines,issue_number,text
+public,magazines,cover_image,text
+public,magazines,pdf_url,text

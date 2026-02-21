@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { getBlogPostBySlug } from "@/lib/data/blog";
-import { r2 } from "@/lib/r2";
 
 function formatDate(dateString: string | null): string {
   if (!dateString) return "";
@@ -23,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: `${post.title} | Psikoloji Dergisi`,
     description: post.excerpt ?? undefined,
     openGraph: {
-      images: post.cover_path ? [r2.blog(post.cover_path)] : undefined,
+      images: post.cover_path ? [post.cover_path] : undefined,
     },
   };
 }
@@ -38,7 +37,7 @@ export default async function BlogPostPage({
 
   if (!post) return notFound();
 
-  const cover = post.cover_path ? r2.blog(post.cover_path) : null;
+  const cover = post.cover_path ?? null;
   const authorName = post.author_full_name ?? post.author_name ?? "Editör";
   const publishedAtFormatted = formatDate(post.published_at);
 

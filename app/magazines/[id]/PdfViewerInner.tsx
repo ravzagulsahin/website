@@ -1,15 +1,17 @@
-"use client";
+ "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Document, Page, pdfjs } from "react-pdf";
+import { Document, Page } from "react-pdf";
+import * as pdfjs from "pdfjs-dist";
 import HTMLFlipBook from "react-pageflip";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url
-).toString();
+// Use CDN worker to avoid bundling issues in different build environments
+// and ensure compatibility with pdfjs-dist version used.
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${(pdfjs as any).version}/pdf.worker.min.js`;
 
 const BOOK_WIDTH = 400;
 const BOOK_HEIGHT = 565;
@@ -110,7 +112,11 @@ export default function PdfViewerInner({ url }: { url: string }) {
                 value={jumpInput || currentPageIndex + 1}
                 onChange={(e) => setJumpInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && jumpToPage((e.target as HTMLInputElement).value)}
-                onBlur={(e) => jumpToPage(e.target.value) || setJumpInput(String(currentPageIndex + 1))}
+                onBlur={(e) => {
+                  // jumpToPage returns void; avoid testing its return value.
+                  jumpToPage((e.target as HTMLInputElement).value);
+                  setJumpInput(String(currentPageIndex + 1));
+                }}
                 className="w-14 text-center text-sm bg-white/80 border border-zinc-200 rounded-lg py-1.5 px-2 text-zinc-800"
               />
               <button

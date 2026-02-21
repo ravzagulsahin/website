@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { getBlogPosts } from "@/lib/data/blog";
-import { r2 } from "@/lib/r2";
 
 function formatDate(dateString: string | null): string {
   if (!dateString) return "";
@@ -29,7 +28,7 @@ export default async function BlogPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {posts.map((post) => {
-            const cover = post.cover_path ? r2.blog(post.cover_path) : null;
+            const cover = post.cover_path ?? null;
 
             return (
               <Link

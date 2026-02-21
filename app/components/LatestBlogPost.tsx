@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { getLatestBlogPost } from "@/lib/data/blog";
-import { r2 } from "@/lib/r2";
 
 export default async function LatestBlogPost() {
   const post = await getLatestBlogPost();
@@ -28,8 +27,8 @@ export default async function LatestBlogPost() {
     );
   }
 
-  const cover = post.cover_path ? r2.blog(post.cover_path) : null;
-  console.log('📝 LatestBlogPost - cover_path:', post.cover_path, '→ URL:', cover);
+  const cover = post.cover_path ?? null;
+  console.log("📝 LatestBlogPost - cover_path:", post.cover_path, "→ URL:", cover);
 
   return (
     <section style={{
