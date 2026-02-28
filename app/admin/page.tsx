@@ -119,7 +119,9 @@ export default function AdminPage() {
         .maybeSingle();
 
       if (error) throw error;
-      return !!data && data.is_super_admin === true;
+      // Allow any email present in the admins table to be considered an admin.
+      // Super admin flag is managed separately and is not required to access the panel.
+      return !!data;
     } catch (err) {
       console.error(err);
       return false;

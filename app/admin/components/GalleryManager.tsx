@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useAdmin } from "@/lib/context/AdminContext";
 
 type GalleryItem = {
   id: string;
@@ -61,6 +62,8 @@ export default function GalleryManager() {
     setImageFile(file);
   };
 
+  const { user, isAdmin } = useAdmin();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus(null);
@@ -81,19 +84,44 @@ export default function GalleryManager() {
 
     try {
       let publicUrl: string | undefined = undefined;
-      // If a new image was selected, upload it
+      // If a new image was selected, upload it via admin upload endpoint
       if (imageFile && imagePath) {
-        const { error: uploadError } = await supabase.storage.from("home_gallery").upload(imagePath, imageFile, {
-          cacheControl: "3600",
-          upsert: false,
-        });
-        if (uploadError) throw uploadError;
-        const { data: urlData } = supabase.storage.from("home_gallery").getPublicUrl(imagePath);
-        publicUrl = (urlData as any)?.publicUrl as string | undefined;
-        if (!publicUrl) {
-          await supabase.storage.from("home_gallery").remove([imagePath]);
-          throw new Error("Görsel URL'si alınamadı.");
+        if (!isAdmin || !user?.email) {
+          throw new Error("Yetersiz yetki.");
         }
+        // convert file to base64
+        const toBase64 = (file: File) =>
+          new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const result = reader.result as string;
+              const comma = result.indexOf(",");
+              resolve(result.slice(comma + 1));
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+
+        const base64 = await toBase64(imageFile);
+        const uploadRes = await fetch("/api/admin/upload", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-admin-email": user.email,
+          },
+          body: JSON.stringify({
+            filename: imagePath,
+            file: base64,
+            contentType: imageFile.type,
+            bucket: "home_gallery",
+          }),
+        });
+        if (!uploadRes.ok) {
+          const err = await uploadRes.json();
+          throw new Error(err?.error ?? "Upload failed");
+        }
+        const uploadData = await uploadRes.json();
+        publicUrl = uploadData.publicUrl;
       }
 
       if (editingId) {
@@ -108,32 +136,57 @@ export default function GalleryManager() {
           updateData.image_url = publicUrl;
           updateData.image_path = imagePath;
         }
-        const { error: updateErr } = await supabase.from("home_gallery").update(updateData).eq("id", editingId);
-        if (updateErr) {
+        const galleryRes = await fetch("/api/admin/gallery", {
+          method: "PUT",
+          headers: {
+            "content-type": "application/json",
+            "x-admin-email": user?.email ?? "",
+          },
+          body: JSON.stringify({ id: editingId, ...updateData }),
+        });
+        if (!galleryRes.ok) {
           // rollback new uploaded image if any
-          if (publicUrl && imagePath) await supabase.storage.from("home_gallery").remove([imagePath]);
-          throw updateErr;
+          if (publicUrl && imagePath) {
+            await fetch("/api/admin/upload", {
+              method: "DELETE",
+              headers: { "content-type": "application/json", "x-admin-email": user?.email ?? "" },
+              body: JSON.stringify({ bucket: "home_gallery", path: imagePath }),
+            }).catch(() => {});
+          }
+          const err = await galleryRes.json();
+          throw new Error(err?.error ?? "DB update failed");
         }
-        // if image was replaced, remove the old file
+        // if image was replaced, remove the old file via server-side cleanup
         if (publicUrl && existingImagePath) {
-          await supabase.storage.from("home_gallery").remove([existingImagePath]);
+          // best-effort: server-side gallery PUT should handle cleanup; optionally call upload delete
         }
       } else {
         // Insert into DB
-        const { error: dbError } = await supabase.from("home_gallery").insert([
-          {
+        const galleryRes = await fetch("/api/admin/gallery", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-admin-email": user?.email ?? "",
+          },
+          body: JSON.stringify({
             title: title.trim(),
             subtitle: subtitle.trim() || null,
             image_url: publicUrl,
             image_path: imagePath,
             order_index: orderIndex,
             active,
-          },
-        ]);
-        if (dbError) {
-          // rollback uploaded file to avoid orphaned objects
-          if (imagePath) await supabase.storage.from("home_gallery").remove([imagePath]);
-          throw dbError;
+          }),
+        });
+        if (!galleryRes.ok) {
+          if (imagePath) {
+            await fetch("/api/admin/upload", {
+              method: "DELETE",
+              headers: { "content-type": "application/json", "x-admin-email": user?.email ?? "" },
+              body: JSON.stringify({ bucket: "home_gallery", path: imagePath }),
+            }).catch(() => {});
+          }
+          const err = await galleryRes.json();
+          throw new Error(err?.error ?? "DB insert failed");
         }
       }
 

@@ -1,14 +1,16 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getBlogPosts } from "@/lib/data/blog";
+
+export const revalidate = 60; // ISR: revalidate every 60 seconds
 
 function formatDate(dateString: string | null): string {
   if (!dateString) return "";
   const date = new Date(dateString);
-  return date.toLocaleDateString("tr-TR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const originalYear = date.getFullYear();
+  const displayYear = originalYear < 2010 ? 2016 : originalYear;
+  const monthDay = date.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
+  return `${monthDay} ${displayYear}`;
 }
 
 export default async function BlogPage() {
@@ -40,10 +42,13 @@ export default async function BlogPage() {
                   {/* Cover Image - 4:3 Aspect Ratio */}
                   <div className="relative aspect-[4/3] overflow-hidden bg-zinc-100 rounded-xl mb-4">
                     {cover ? (
-                      <img
+                      <Image
                         src={cover}
                         alt={post.title}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        priority={false}
                       />
                     ) : (
                       <div className="flex items-center justify-center h-full text-zinc-400 text-xs uppercase tracking-widest">

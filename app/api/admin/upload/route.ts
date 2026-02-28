@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { ensureAdminHeader } from "@/lib/server/ensureAdmin";
 
 export async function POST(request: NextRequest) {
   try {
+    const adminEmail = request.headers.get("x-admin-email");
+    const ok = await ensureAdminHeader(adminEmail);
+    if (!ok) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
     const { filename, file, contentType, bucket: bucketName = "blog_images" } = await request.json();
     if (!filename || !file || !contentType) {
       return NextResponse.json({ error: "Missing file, filename or contentType" }, { status: 400 });

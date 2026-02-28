@@ -24,7 +24,7 @@ export default function EditableMagazineCard({
   onUpdate,
   children,
 }: EditableMagazineCardProps) {
-  const { isEditMode, isAdmin } = useAdmin();
+  const { isEditMode, isAdmin, user } = useAdmin();
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editData, setEditData] = useState({
@@ -36,16 +36,16 @@ export default function EditableMagazineCard({
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("magazines")
-        .update({
-          title: editData.title,
-          issue_number: editData.issue_number,
-        })
-        .eq("id", magazine.id);
-
-      if (error) throw error;
-
+      if (!isAdmin || !user?.email) throw new Error("Unauthorized");
+      const res = await fetch("/api/admin/magazines", {
+        method: "PUT",
+        headers: { "content-type": "application/json", "x-admin-email": user.email },
+        body: JSON.stringify({ id: magazine.id, title: editData.title, issue_number: editData.issue_number }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err?.error ?? "Update failed");
+      }
       setIsEditing(false);
       onUpdate?.();
     } catch (error) {
@@ -61,13 +61,16 @@ export default function EditableMagazineCard({
 
     setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from("magazines")
-        .delete()
-        .eq("id", magazine.id);
-
-      if (error) throw error;
-
+      if (!isAdmin || !user?.email) throw new Error("Unauthorized");
+      const res = await fetch("/api/admin/magazines", {
+        method: "DELETE",
+        headers: { "content-type": "application/json", "x-admin-email": user.email },
+        body: JSON.stringify({ id: magazine.id }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err?.error ?? "Delete failed");
+      }
       onUpdate?.();
     } catch (error) {
       console.error("Error deleting magazine:", error);
@@ -79,13 +82,16 @@ export default function EditableMagazineCard({
 
   const togglePublish = async () => {
     try {
-      const { error } = await supabase
-        .from("magazines")
-        .update({ published: !magazine.published })
-        .eq("id", magazine.id);
-
-      if (error) throw error;
-
+      if (!isAdmin || !user?.email) throw new Error("Unauthorized");
+      const res = await fetch("/api/admin/magazines", {
+        method: "PUT",
+        headers: { "content-type": "application/json", "x-admin-email": user.email },
+        body: JSON.stringify({ id: magazine.id, published: !magazine.published, title: magazine.title, issue_number: magazine.issue_number }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err?.error ?? "Toggle failed");
+      }
       onUpdate?.();
     } catch (error) {
       console.error("Error toggling publish:", error);

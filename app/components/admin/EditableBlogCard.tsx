@@ -29,7 +29,7 @@ export default function EditableBlogCard({
   onUpdate,
   children,
 }: EditableBlogCardProps) {
-  const { isEditMode, isAdmin } = useAdmin();
+  const { isEditMode, isAdmin, user } = useAdmin();
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editData, setEditData] = useState({
@@ -41,23 +41,27 @@ export default function EditableBlogCard({
 
   const handleSave = async () => {
     setSaving(true);
+    // optimistic: close editor and trigger parent to refresh immediately
+    setIsEditing(false);
+    onUpdate?.();
     try {
-      const { error } = await supabase
-        .from("blog_posts")
-        .update({
+      await fetch("/api/admin/blogs", {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+          "x-admin-email": user?.email ?? "",
+        },
+        body: JSON.stringify({
+          id: post.id,
           title: editData.title,
           excerpt: editData.excerpt,
           published: editData.published,
-        })
-        .eq("id", post.id);
-
-      if (error) throw error;
-
-      setIsEditing(false);
-      onUpdate?.();
+        }),
+      });
     } catch (error) {
       console.error("Error updating post:", error);
       alert("Güncelleme başarısız oldu.");
+      onUpdate?.();
     } finally {
       setSaving(false);
     }
@@ -67,35 +71,41 @@ export default function EditableBlogCard({
     if (!confirm("Bu yazıyı silmek istediğinizden emin misiniz?")) return;
 
     setIsDeleting(true);
+    // optimistic: trigger parent refresh immediately
+    onUpdate?.();
     try {
-      const { error } = await supabase
-        .from("blog_posts")
-        .delete()
-        .eq("id", post.id);
-
-      if (error) throw error;
-
-      onUpdate?.();
+      await fetch("/api/admin/blogs", {
+        method: "DELETE",
+        headers: {
+          "content-type": "application/json",
+          "x-admin-email": user?.email ?? "",
+        },
+        body: JSON.stringify({ id: post.id }),
+      });
     } catch (error) {
       console.error("Error deleting post:", error);
       alert("Silme başarısız oldu.");
+      onUpdate?.();
     } finally {
       setIsDeleting(false);
     }
   };
 
   const togglePublish = async () => {
+    // optimistic
+    onUpdate?.();
     try {
-      const { error } = await supabase
-        .from("blog_posts")
-        .update({ published: !post.published })
-        .eq("id", post.id);
-
-      if (error) throw error;
-
-      onUpdate?.();
+      await fetch("/api/admin/blogs", {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+          "x-admin-email": (isAdmin && (typeof window !== "undefined") ? (window as any).__SUPABASE_ADMIN_EMAIL__ || "" : "") || (post as any).author_name || "",
+        },
+        body: JSON.stringify({ id: post.id, published: !post.published }),
+      });
     } catch (error) {
       console.error("Error toggling publish:", error);
+      onUpdate?.();
     }
   };
 

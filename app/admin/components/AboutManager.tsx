@@ -1,29 +1,52 @@
-"use client";
+ "use client";
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { useAdmin } from "@/lib/context/AdminContext";
 
 export default function AboutManager() {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
+  const { user, isAdmin, isEditMode } = useAdmin();
 
   useEffect(() => {
     async function loadAbout() {
-      const { data } = await supabase.from("about_content").select("content").single();
-      if (data) setContent(data.content);
+      try {
+        const res = await fetch("/api/admin/about");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.content) setContent(data.content);
+      } catch (e) {
+        // ignore
+      }
     }
     loadAbout();
   }, []);
 
   const handleUpdate = async () => {
+    if (!isAdmin || !user?.email) {
+      alert("Yetersiz yetki.");
+      return;
+    }
     setLoading(true);
-    const { error } = await supabase
-      .from("about_content")
-      .update({ content })
-      .match({ id: (await supabase.from("about_content").select("id").single()).data?.id });
-
-    if (error) alert("Hata: " + error.message);
-    else alert("Hakkımızda yazısı güncellendi!");
-    setLoading(false);
+    try {
+      const res = await fetch("/api/admin/about", {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+          "x-admin-email": user.email,
+        },
+        body: JSON.stringify({ content }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert("Hata: " + (err?.error ?? "Güncelleme başarısız"));
+      } else {
+        alert("Hakkımızda yazısı güncellendi!");
+      }
+    } catch (e: any) {
+      alert("Hata: " + e?.message ?? "Bilinmeyen hata");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

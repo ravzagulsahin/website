@@ -1,18 +1,24 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { ensureAdminHeader } from "@/lib/server/ensureAdmin";
 
 export async function GET() {
-  const supabase = createSupabaseServerClient();
-  const { data, error } = await supabase.from("blog_posts").select("*").order("published_at", { ascending: false });
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  // Server-side admin check via header
+  // Expect header: x-admin-email
+  try {
+    return NextResponse.json({ error: "GET not allowed on this admin route" }, { status: 405 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
-  return NextResponse.json(data ?? []);
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const adminEmail = request.headers.get("x-admin-email");
+    const ok = await ensureAdminHeader(adminEmail);
+    if (!ok) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
     const body = await request.json();
     const supabase = createSupabaseServerClient();
     const { data, error } = await supabase.from("blog_posts").insert([body]);
@@ -25,6 +31,10 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const adminEmail = request.headers.get("x-admin-email");
+    const ok = await ensureAdminHeader(adminEmail);
+    if (!ok) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
     const body = await request.json();
     const { id, ...rest } = body;
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
@@ -39,6 +49,10 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const adminEmail = request.headers.get("x-admin-email");
+    const ok = await ensureAdminHeader(adminEmail);
+    if (!ok) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
     const body = await request.json();
     const { id } = body;
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });

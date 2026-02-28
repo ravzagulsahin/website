@@ -6,6 +6,7 @@ import "react-pdf/dist/Page/TextLayer.css";
 import "./globals.css";
 import { AdminProvider } from "@/lib/context/AdminContext";
 import AdminToolbar from "@/app/components/AdminToolbar";
+import QueryProvider from "./providers/QueryProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,11 +30,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <AdminProvider>
-          <nav className="navbar">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <QueryProvider>
+          <AdminProvider>
+            <nav className="navbar">
             <div className="nav-inner">
               <div className="pill">
                 <Link href="/">Ana Sayfa</Link>
@@ -45,11 +45,10 @@ export default function RootLayout({
               </div>
             </div>
           </nav>
-          <main className="container">
-            {children}
-          </main>
-          <AdminToolbar />
-        </AdminProvider>
+            <main className="container">{children}</main>
+            <AdminToolbar />
+          </AdminProvider>
+        </QueryProvider>
       </body>
     </html>
   );

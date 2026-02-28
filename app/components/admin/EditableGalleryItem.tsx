@@ -26,7 +26,7 @@ export default function EditableGalleryItem({
   onUpdate,
   children,
 }: EditableGalleryItemProps) {
-  const { isEditMode, isAdmin } = useAdmin();
+  const { isEditMode, isAdmin, user } = useAdmin();
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editData, setEditData] = useState({
@@ -40,18 +40,22 @@ export default function EditableGalleryItem({
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("home_gallery")
-        .update({
+      if (!isAdmin || !user?.email) throw new Error("Unauthorized");
+      const res = await fetch("/api/admin/gallery", {
+        method: "PUT",
+        headers: { "content-type": "application/json", "x-admin-email": user.email },
+        body: JSON.stringify({
+          id: item.id,
           title: editData.title || null,
           subtitle: editData.subtitle || null,
           order_index: editData.order_index,
           active: editData.active,
-        })
-        .eq("id", item.id);
-
-      if (error) throw error;
-
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err?.error ?? "Update failed");
+      }
       setIsEditing(false);
       onUpdate?.();
     } catch (error) {
@@ -67,13 +71,16 @@ export default function EditableGalleryItem({
 
     setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from("home_gallery")
-        .delete()
-        .eq("id", item.id);
-
-      if (error) throw error;
-
+      if (!isAdmin || !user?.email) throw new Error("Unauthorized");
+      const res = await fetch("/api/admin/gallery", {
+        method: "DELETE",
+        headers: { "content-type": "application/json", "x-admin-email": user.email },
+        body: JSON.stringify({ id: item.id }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err?.error ?? "Delete failed");
+      }
       onUpdate?.();
     } catch (error) {
       console.error("Error deleting gallery item:", error);
@@ -85,13 +92,16 @@ export default function EditableGalleryItem({
 
   const toggleActive = async () => {
     try {
-      const { error } = await supabase
-        .from("home_gallery")
-        .update({ active: !item.active })
-        .eq("id", item.id);
-
-      if (error) throw error;
-
+      if (!isAdmin || !user?.email) throw new Error("Unauthorized");
+      const res = await fetch("/api/admin/gallery", {
+        method: "PUT",
+        headers: { "content-type": "application/json", "x-admin-email": user.email },
+        body: JSON.stringify({ id: item.id, title: item.title, subtitle: item.subtitle, image_url: item.image_url, image_path: item.image_path, order_index: item.order_index, active: !item.active }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err?.error ?? "Toggle failed");
+      }
       onUpdate?.();
     } catch (error) {
       console.error("Error toggling active:", error);

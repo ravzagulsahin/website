@@ -14,11 +14,10 @@ interface MagazineCardProps {
 function formatDate(dateString?: string): string {
   if (!dateString) return "";
   const date = new Date(dateString);
-  return date.toLocaleDateString("tr-TR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const originalYear = date.getFullYear();
+  const displayYear = originalYear < 2010 ? 2016 : originalYear;
+  const monthDay = date.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
+  return `${monthDay} ${displayYear}`;
 }
 
 export default function MagazineCard({ magazine }: MagazineCardProps) {
@@ -27,9 +26,11 @@ export default function MagazineCard({ magazine }: MagazineCardProps) {
       {/* A4 Aspect Ratio (1:1.414) */}
       <div className="relative aspect-[1/1.414] overflow-hidden bg-zinc-100 rounded-sm shadow-lg transition-all duration-700 group-hover:shadow-xl">
         {magazine.cover_image ? (
-          <img
-            src={magazine.cover_image} 
+          <Image
+            src={magazine.cover_image}
             alt={magazine.title}
+            fill
+            sizes="(max-width: 768px) 100vw, 25vw"
             className="object-cover w-full h-full grayscale-[0.2] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-1000"
           />
         ) : (

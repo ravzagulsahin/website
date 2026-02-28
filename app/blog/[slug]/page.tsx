@@ -1,14 +1,16 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import { getBlogPostBySlug } from "@/lib/data/blog";
+
+export const revalidate = 60; // ISR: revalidate every 60 seconds
 
 function formatDate(dateString: string | null): string {
   if (!dateString) return "";
   const date = new Date(dateString);
-  return date.toLocaleDateString("tr-TR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const originalYear = date.getFullYear();
+  const displayYear = originalYear < 2010 ? 2016 : originalYear;
+  const monthDay = date.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
+  return `${monthDay} ${displayYear}`;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -74,6 +76,21 @@ export default async function BlogPostPage({
             )}
           </div>
         </div>
+        {/* Structured data for SEO */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Article",
+              headline: post.title,
+              author: { "@type": "Person", name: authorName },
+              datePublished: post.published_at ?? undefined,
+              image: cover ?? undefined,
+              description: post.excerpt ?? undefined,
+            }),
+          }}
+        />
 
         {/* Main content - white page container */}
         <div
@@ -98,11 +115,7 @@ export default async function BlogPostPage({
           {/* Cover image */}
           {cover && (
             <div className="mb-10 rounded-2xl overflow-hidden shadow-xl">
-              <img
-                src={cover}
-                alt={post.title}
-                className="w-full aspect-[21/9] object-cover"
-              />
+              <Image src={cover} alt={post.title} width={1200} height={514} className="w-full aspect-[21/9] object-cover" />
             </div>
           )}
 
