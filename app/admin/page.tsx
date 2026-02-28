@@ -10,7 +10,7 @@ import AboutManager from "./components/AboutManager";
 import {
   BookOpen,
   FileText,
-  Image,
+  Image as ImageIcon,
   Users,
   Info,
   LogOut,
@@ -26,7 +26,7 @@ const menuItems = [
   { id: "dashboard" as const, label: "Dashboard", icon: LayoutDashboard },
   { id: "magazines" as const, label: "Dergiler", icon: BookOpen },
   { id: "blog" as const, label: "Blog Yazıları", icon: FileText },
-  { id: "gallery" as const, label: "Galeri", icon: Image },
+  { id: "gallery" as const, label: "Galeri", icon: ImageIcon },
   { id: "admins" as const, label: "Yöneticiler", icon: Users },
   { id: "about" as const, label: "Hakkımızda", icon: Info },
 ];
@@ -151,9 +151,9 @@ export default function AdminPage() {
       if (error) throw error;
 
       setOtpSent(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setLoginError(err?.message ?? "Giriş kodu gönderilemedi.");
+      setLoginError(err instanceof Error ? err.message : "Giriş kodu gönderilemedi.");
     } finally {
       setLoginLoading(false);
     }
@@ -366,7 +366,7 @@ export default function AdminPage() {
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                      <Image className="w-6 h-6 text-purple-600" />
+                      <ImageIcon className="w-6 h-6 text-purple-600" aria-hidden />
                     </div>
                     <span className="text-3xl font-bold text-zinc-900">
                       {stats.gallery}
@@ -419,7 +419,7 @@ export default function AdminPage() {
                     onClick={() => setActiveTab("gallery")}
                     className="flex items-center gap-3 p-4 bg-zinc-50 rounded-xl hover:bg-zinc-100 transition-colors"
                   >
-                    <Image className="w-5 h-5 text-zinc-600" />
+                    <ImageIcon className="w-5 h-5 text-zinc-600" aria-hidden />
                     <span className="text-sm font-medium text-zinc-700">
                       Görsel Ekle
                     </span>

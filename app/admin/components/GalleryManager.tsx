@@ -50,7 +50,7 @@ export default function GalleryManager() {
       const { data, error } = await supabase.from("home_gallery").select("*").order("order_index", { ascending: true });
       if (error) throw error;
       setItems((data as GalleryItem[]) || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("fetchGallery:", err);
       setStatus({ type: "error", msg: "Galeri öğeleri alınırken hata oluştu." });
     }
@@ -126,7 +126,7 @@ export default function GalleryManager() {
 
       if (editingId) {
         // Update existing item
-        const updateData: any = {
+        const updateData: Record<string, unknown> = {
           title: title.trim(),
           subtitle: subtitle.trim() || null,
           order_index: orderIndex,
@@ -199,9 +199,9 @@ export default function GalleryManager() {
       setEditingId(null);
       setExistingImagePath(null);
       fetchGallery();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleSubmit:", err);
-      setStatus({ type: "error", msg: err.message ?? "Bilinmeyen bir hata oluştu." });
+      setStatus({ type: "error", msg: err instanceof Error ? err.message : "Bilinmeyen bir hata oluştu." });
     } finally {
       setLoading(false);
     }
@@ -225,9 +225,9 @@ export default function GalleryManager() {
 
       setStatus({ type: "success", msg: "Öğe silindi." });
       fetchGallery();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("handleDelete:", err);
-      setStatus({ type: "error", msg: err.message || "Silme işlemi başarısız." });
+      setStatus({ type: "error", msg: err instanceof Error ? err.message : "Silme işlemi başarısız." });
     } finally {
       setLoading(false);
     }

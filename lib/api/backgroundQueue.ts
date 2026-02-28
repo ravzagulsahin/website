@@ -47,7 +47,7 @@ export async function processQueue() {
       await fetchWithRetry(item.url, item.init, 2, 8000);
       queue.shift();
       save();
-    } catch (e) {
+    } catch {
       // stop and retry later
       break;
     }

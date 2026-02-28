@@ -11,7 +11,7 @@ export default function BlogManager() {
   const [existingCover, setExistingCover] = useState<string | null>(null);
   
   const [loading, setLoading] = useState(false);
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<{ id: string; title: string; excerpt?: string; content?: { raw?: string }; cover_path?: string; slug?: string }[]>([]);
 
   // Centralized API endpoints are used instead of direct supabase usage from the client.
   const fetchPosts = async () => {
@@ -26,12 +26,12 @@ export default function BlogManager() {
   }, []);
 
   // Düzenleme modunu açar
-  const handleEdit = (post: any) => {
+  const handleEdit = (post: { id: string; title: string; excerpt?: string; content?: { raw?: string }; cover_path?: string }) => {
     setEditingId(post.id);
     setTitle(post.title);
-    setExcerpt(post.excerpt);
-    setContent(post.content?.raw || post.content);
-    setExistingCover(post.cover_path);
+    setExcerpt(post.excerpt ?? "");
+    setContent(post.content?.raw || (typeof post.content === "string" ? post.content : "") || "");
+    setExistingCover(post.cover_path ?? null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -101,8 +101,8 @@ export default function BlogManager() {
       resetForm();
       fetchPosts();
       alert("Başarıyla kaydedildi!");
-    } catch (err: any) {
-      alert(err.message || "Bir hata oluştu");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setLoading(false);
     }

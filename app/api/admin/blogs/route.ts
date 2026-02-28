@@ -8,8 +8,8 @@ export async function GET() {
   // Expect header: x-admin-email
   try {
     return NextResponse.json({ error: "GET not allowed on this admin route" }, { status: 405 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Server error" }, { status: 500 });
   }
 }
 
@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase.from("blog_posts").insert([body]);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data, { status: 201 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Server error" }, { status: 500 });
   }
 }
 
@@ -42,8 +42,8 @@ export async function PUT(request: NextRequest) {
     const { data, error } = await supabase.from("blog_posts").update(rest).eq("id", id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Server error" }, { status: 500 });
   }
 }
 
@@ -61,7 +61,7 @@ export async function DELETE(request: NextRequest) {
     // Fetch row so we can cleanup storage objects referenced by it
     const { data: rows, error: fetchErr } = await supabase.from("blog_posts").select("*").eq("id", id).maybeSingle();
     if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 });
-    const row = rows as any;
+    const row = rows as { cover_path?: string; content?: { raw?: string } | string } | null;
 
     // Helper to parse Supabase public URLs and attempt to remove the underlying storage object
     const tryRemoveUrl = async (url?: string) => {
@@ -91,8 +91,9 @@ export async function DELETE(request: NextRequest) {
     try {
       const content = row?.content;
       let html = "";
-      if (content && typeof content === "object" && "raw" in content) html = content.raw;
-      else if (typeof content === "string") html = content;
+      if (content && typeof content === "object" && "raw" in content) {
+        html = (content.raw as string) ?? "";
+      } else if (typeof content === "string") html = content;
       if (html) {
         const imgUrls = Array.from(html.matchAll(/<img[^>]+src=["']([^"']+)["']/g)).map(m => m[1]);
         for (const url of imgUrls) {
@@ -107,8 +108,8 @@ export async function DELETE(request: NextRequest) {
     const { error } = await supabase.from("blog_posts").delete().eq("id", id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Server error" }, { status: 500 });
   }
 }
 

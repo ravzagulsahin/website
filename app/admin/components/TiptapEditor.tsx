@@ -2,7 +2,6 @@
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
-import { supabase } from "@/lib/supabaseClient";
 import { 
   Bold, Italic, List, ListOrdered, Heading2, Quote, Undo, Redo, ImageIcon 
 } from 'lucide-react';
@@ -41,7 +40,7 @@ const Toolbar = ({ editor }: { editor: Editor | null }) => {
             return alert(json.error || 'Yükleme hatası');
           }
           editor.chain().focus().setImage({ src: json.publicUrl }).run();
-        } catch (e) {
+        } catch {
           alert('Yükleme sırasında bir hata oluştu.');
         }
       }

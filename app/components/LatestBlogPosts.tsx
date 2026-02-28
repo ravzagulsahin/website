@@ -12,7 +12,7 @@ function formatDate(dateString: string | null): string {
   return `${monthDay} ${displayYear}`;
 }
 
-export default async function LatestBlogPosts(): Promise<JSX.Element> {
+export default async function LatestBlogPosts() {
   try {
     const posts: BlogPostWithAuthor[] = await getLatestBlogPosts(2);
 

@@ -1,5 +1,8 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+// Supabase join'li sorgularda author dizi olarak döner: author: [{ full_name: "..." }]
+type AuthorRow = { full_name?: string | null } | null;
+
 // Centralized Type Definitions
 export type BlogPost = {
   id: string;
@@ -10,7 +13,7 @@ export type BlogPost = {
   published: boolean;
   published_at: string | null;
   content: unknown; // jsonb stored as unknown
-  author?: { full_name?: string | null } | null;
+  author?: AuthorRow | AuthorRow[] | null;
 };
 
 export type BlogPostWithAuthor = BlogPost & { author_name: string };
@@ -29,7 +32,8 @@ const BLOG_SELECT_QUERY = `
 
 function formatAuthorName(post: BlogPost | null): BlogPostWithAuthor | null {
   if (!post) return null;
-  const authorName = post.author?.full_name ?? "Editör";
+  const authorObj = Array.isArray(post.author) ? post.author[0] : post.author;
+  const authorName = authorObj?.full_name ?? "Editör";
   return {
     ...post,
     author_name: authorName,

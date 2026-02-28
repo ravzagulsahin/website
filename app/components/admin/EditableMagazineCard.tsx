@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useAdmin } from "@/lib/context/AdminContext";
-import { supabase } from "@/lib/supabaseClient";
 import { Edit2, Trash2, X, Save, Eye, EyeOff } from "lucide-react";
 
 interface Magazine {

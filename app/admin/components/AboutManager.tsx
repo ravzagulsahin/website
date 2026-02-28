@@ -5,7 +5,7 @@ import { useAdmin } from "@/lib/context/AdminContext";
 export default function AboutManager() {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
-  const { user, isAdmin, isEditMode } = useAdmin();
+  const { user, isAdmin } = useAdmin();
 
   useEffect(() => {
     async function loadAbout() {
@@ -14,7 +14,7 @@ export default function AboutManager() {
         if (!res.ok) return;
         const data = await res.json();
         if (data?.content) setContent(data.content);
-      } catch (e) {
+      } catch {
         // ignore
       }
     }
@@ -42,8 +42,8 @@ export default function AboutManager() {
       } else {
         alert("Hakkımızda yazısı güncellendi!");
       }
-    } catch (e: any) {
-      alert("Hata: " + e?.message ?? "Bilinmeyen hata");
+    } catch (e: unknown) {
+      alert("Hata: " + (e instanceof Error ? e.message : "Bilinmeyen hata"));
     } finally {
       setLoading(false);
     }

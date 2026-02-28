@@ -19,8 +19,8 @@ export async function POST(request: NextRequest) {
     ]);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data, { status: 201 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Server error" }, { status: 500 });
   }
 }
 
@@ -41,8 +41,8 @@ export async function PUT(request: NextRequest) {
       .eq("id", id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Server error" }, { status: 500 });
   }
 }
 
@@ -59,7 +59,7 @@ export async function DELETE(request: NextRequest) {
     const supabase = createSupabaseServerClient();
     const { data: row, error: fetchErr } = await supabase.from("home_gallery").select("*").eq("id", id).maybeSingle();
     if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 });
-    const imagePath = (row as any)?.image_path;
+    const imagePath = row && typeof row === "object" && "image_path" in row ? (row as { image_path?: string }).image_path : undefined;
     if (imagePath) {
       try {
         await supabase.storage.from("home_gallery").remove([imagePath]);
@@ -72,8 +72,8 @@ export async function DELETE(request: NextRequest) {
     const { error } = await supabase.from("home_gallery").delete().eq("id", id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Server error" }, { status: 500 });
   }
 }
 

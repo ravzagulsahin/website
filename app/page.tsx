@@ -1,3 +1,4 @@
+import Link from "next/link";
 import ImageSlider from './components/ImageSlider';
 import { getMagazines } from '@/lib/data/magazines';
 import { getHomeSlides } from '@/lib/data/homeGallery';
@@ -28,7 +29,7 @@ export default async function Home() {
       <section className="max-w-7xl mx-auto px-6 py-24">
         <div className="flex justify-between items-end mb-12">
           <h2 className="text-3xl font-serif italic">Öne Çıkan Sayılar</h2>
-          <a href="/magazines" className="text-xs uppercase tracking-widest hover:opacity-50 transition-opacity">Tümünü Gör →</a>
+          <Link href="/magazines" className="text-xs uppercase tracking-widest hover:opacity-50 transition-opacity">Tümünü Gör →</Link>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">

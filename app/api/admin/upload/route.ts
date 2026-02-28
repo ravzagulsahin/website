@@ -46,8 +46,8 @@ export async function POST(request: NextRequest) {
     const { data } = bucket.getPublicUrl(filename);
     // Return both publicUrl and the storage path we wrote (useful for cleanup)
     return NextResponse.json({ publicUrl: data.publicUrl, path: filename, bucket: bucketName });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Server error" }, { status: 500 });
   }
 }
 

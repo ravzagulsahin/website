@@ -18,8 +18,8 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ revalidated: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Server error" }, { status: 500 });
   }
 }
 

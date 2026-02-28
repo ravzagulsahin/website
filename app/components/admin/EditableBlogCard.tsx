@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useAdmin } from "@/lib/context/AdminContext";
-import { supabase } from "@/lib/supabaseClient";
 import { Edit2, Trash2, X, Save, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 
@@ -18,14 +17,13 @@ interface BlogPost {
 
 interface EditableBlogCardProps {
   post: BlogPost;
-  coverUrl: string | null;
+  coverUrl?: string | null;
   onUpdate?: () => void;
   children: React.ReactNode;
 }
 
 export default function EditableBlogCard({
   post,
-  coverUrl,
   onUpdate,
   children,
 }: EditableBlogCardProps) {
@@ -99,7 +97,7 @@ export default function EditableBlogCard({
         method: "PUT",
         headers: {
           "content-type": "application/json",
-          "x-admin-email": (isAdmin && (typeof window !== "undefined") ? (window as any).__SUPABASE_ADMIN_EMAIL__ || "" : "") || (post as any).author_name || "",
+          "x-admin-email": (user?.email ?? ""),
         },
         body: JSON.stringify({ id: post.id, published: !post.published }),
       });

@@ -9,8 +9,8 @@ export async function GET() {
     const { data, error } = await supabase.from("about_content").select("id,content").maybeSingle();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data ?? null);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Server error" }, { status: 500 });
   }
 }
 
@@ -26,7 +26,7 @@ export async function PUT(request: NextRequest) {
 
     const supabase = createSupabaseServerClient();
     const { data: existing } = await supabase.from("about_content").select("id").maybeSingle();
-    const id = (existing as any)?.id;
+    const id = existing && typeof existing === "object" && "id" in existing ? (existing as { id: string }).id : undefined;
     if (id) {
       const { error } = await supabase.from("about_content").update({ content }).eq("id", id);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -36,8 +36,8 @@ export async function PUT(request: NextRequest) {
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       return NextResponse.json({ success: true }, { status: 201 });
     }
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Server error" }, { status: 500 });
   }
 }
 

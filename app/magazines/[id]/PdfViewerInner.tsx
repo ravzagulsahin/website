@@ -11,7 +11,7 @@ import "react-pdf/dist/Page/TextLayer.css";
 // and ensure compatibility with pdfjs-dist version used.
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${(pdfjs as any).version}/pdf.worker.min.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${(pdfjs as { version?: string }).version ?? "3.11.174"}/pdf.worker.min.js`;
 
 const BOOK_WIDTH = 400;
 const BOOK_HEIGHT = 565;

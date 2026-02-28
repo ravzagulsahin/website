@@ -80,8 +80,8 @@ export default function MagazineManager() {
       setDescription("");
       setCoverFile(null);
       setPdfFile(null);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Bilinmeyen hata");
     } finally {
       setLoading(false);
     }

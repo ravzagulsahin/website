@@ -9,7 +9,9 @@ async function getLatest() {
 }
 
 export function useLatestPosts() {
-  return useQuery(["latestPosts"], getLatest, {
+  return useQuery({
+    queryKey: ["latestPosts"],
+    queryFn: getLatest,
     staleTime: 1000 * 60, // 1 minute
     retry: 2,
   });

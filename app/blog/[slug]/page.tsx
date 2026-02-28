@@ -40,7 +40,7 @@ export default async function BlogPostPage({
   if (!post) return notFound();
 
   const cover = post.cover_path ?? null;
-  const authorName = post.author_full_name ?? post.author_name ?? "Editör";
+  const authorName = post.author_name ?? "Editör";
   const publishedAtFormatted = formatDate(post.published_at);
 
   return (
@@ -125,7 +125,7 @@ export default async function BlogPostPage({
               __html:
                 typeof post.content === "string"
                   ? post.content
-                  : (post.content?.raw as string) ?? "",
+                  : (post.content as { raw?: string } | null)?.raw ?? "",
             }}
             className="prose prose-zinc prose-lg max-w-none
                        prose-headings:font-serif prose-headings:italic
